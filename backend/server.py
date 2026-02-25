@@ -1,15 +1,21 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Query, Response, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
-
+from datetime import datetime, timezone, timedelta
+import httpx
+from passlib.context import CryptContext
+from jose import jwt, JWTError
+import base64
+import json
+import math
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -17,44 +23,886 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'newschool_db')]
 
-# Create the main app without a prefix
-app = FastAPI()
+# Create the main app
+app = FastAPI(title="New School API", version="1.0.0")
 
-# Create a router with the /api prefix
+# Create router with /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Security
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "newschool-super-secret-key-change-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_DAYS = 7
 
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+security = HTTPBearer(auto_error=False)
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-# Add your routes to the router instead of directly to app
+# ======================= MODELS =======================
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    first_name: str
+    phone: Optional[str] = None
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserProfile(BaseModel):
+    user_id: str
+    email: str
+    first_name: str
+    photo: Optional[str] = None
+    bio: Optional[str] = None
+    languages: List[str] = []
+    phone: Optional[str] = None
+    subscription_tier: str = "free"
+    events_created_this_month: int = 0
+    events_joined_this_month: int = 0
+    created_at: datetime
+    is_verified: bool = False
+
+class UserProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    photo: Optional[str] = None
+    bio: Optional[str] = None
+    languages: Optional[List[str]] = None
+    phone: Optional[str] = None
+
+class EventCreate(BaseModel):
+    name: str
+    description: str
+    location_name: str
+    latitude: float
+    longitude: float
+    max_participants: int = 10
+    duration_hours: int = 2
+    desired_nationalities: List[str] = []
+    theme: Optional[str] = None
+    photo: Optional[str] = None
+    start_time: Optional[datetime] = None
+
+class EventResponse(BaseModel):
+    event_id: str
+    name: str
+    description: str
+    location_name: str
+    latitude: float
+    longitude: float
+    max_participants: int
+    current_participants: int
+    duration_hours: int
+    desired_nationalities: List[str]
+    theme: Optional[str]
+    photo: Optional[str]
+    creator_id: str
+    creator_name: str
+    creator_photo: Optional[str]
+    participants: List[Dict[str, Any]]
+    status: str
+    created_at: datetime
+    start_time: Optional[datetime]
+    is_full: bool
+
+class MessageCreate(BaseModel):
+    content: str
+    message_type: str = "text"  # text, audio, image, video
+
+class MessageResponse(BaseModel):
+    message_id: str
+    event_id: str
+    sender_id: str
+    sender_name: str
+    sender_photo: Optional[str]
+    content: str
+    message_type: str
+    created_at: datetime
+    is_read: bool = False
+
+class ReportCreate(BaseModel):
+    reported_id: str
+    report_type: str  # user, event, message
+    reason: str
+    description: Optional[str] = None
+
+class SubscriptionTier(BaseModel):
+    tier: str  # discovery, explorer, ambassador
+    price: float
+    features: List[str]
+
+class SubscriptionUpdate(BaseModel):
+    tier: str
+
+# ======================= AUTH HELPERS =======================
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def get_current_user(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    # Try cookie first
+    session_token = request.cookies.get("session_token")
+    
+    # Then try Authorization header
+    if not session_token and credentials:
+        session_token = credentials.credentials
+    
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Check if it's a JWT token
+    try:
+        payload = jwt.decode(session_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        return user
+    except JWTError:
+        pass
+    
+    # Check session token in database (Google OAuth)
+    session = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Check expiry
+    expires_at = session.get("expires_at")
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Session expired")
+    
+    user = await db.users.find_one({"user_id": session["user_id"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+# ======================= AUTH ENDPOINTS =======================
+
+@api_router.post("/auth/register")
+async def register(user_data: UserCreate):
+    """Register a new user with email/password"""
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    hashed_password = hash_password(user_data.password)
+    
+    user_doc = {
+        "user_id": user_id,
+        "email": user_data.email,
+        "password": hashed_password,
+        "first_name": user_data.first_name,
+        "phone": user_data.phone,
+        "photo": None,
+        "bio": None,
+        "languages": [],
+        "subscription_tier": "free",
+        "events_created_this_month": 0,
+        "events_joined_this_month": 0,
+        "created_at": datetime.now(timezone.utc),
+        "is_verified": False,
+        "blocked_users": []
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    token = create_access_token({"user_id": user_id})
+    
+    return {
+        "user_id": user_id,
+        "email": user_data.email,
+        "first_name": user_data.first_name,
+        "token": token
+    }
+
+@api_router.post("/auth/login")
+async def login(user_data: UserLogin, response: Response):
+    """Login with email/password"""
+    user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not user.get("password") or not verify_password(user_data.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_access_token({"user_id": user["user_id"]})
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        path="/"
+    )
+    
+    return {
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "first_name": user["first_name"],
+        "token": token
+    }
+
+@api_router.post("/auth/session")
+async def exchange_session(request: Request, response: Response):
+    """Exchange Emergent OAuth session_id for session data"""
+    body = await request.json()
+    session_id = body.get("session_id")
+    
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id required")
+    
+    # Call Emergent Auth API
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": session_id}
+        )
+        
+        if resp.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid session_id")
+        
+        oauth_data = resp.json()
+    
+    email = oauth_data.get("email")
+    name = oauth_data.get("name", "User")
+    picture = oauth_data.get("picture")
+    session_token = oauth_data.get("session_token")
+    
+    # Check if user exists
+    existing_user = await db.users.find_one({"email": email}, {"_id": 0})
+    
+    if existing_user:
+        user_id = existing_user["user_id"]
+        # Update user info
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {"photo": picture, "first_name": name.split()[0] if name else "User"}}
+        )
+    else:
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        user_doc = {
+            "user_id": user_id,
+            "email": email,
+            "first_name": name.split()[0] if name else "User",
+            "photo": picture,
+            "bio": None,
+            "languages": [],
+            "phone": None,
+            "subscription_tier": "free",
+            "events_created_this_month": 0,
+            "events_joined_this_month": 0,
+            "created_at": datetime.now(timezone.utc),
+            "is_verified": True,
+            "blocked_users": []
+        }
+        await db.users.insert_one(user_doc)
+    
+    # Store session
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    await db.user_sessions.update_one(
+        {"user_id": user_id},
+        {"$set": {
+            "session_token": session_token,
+            "expires_at": expires_at,
+            "created_at": datetime.now(timezone.utc)
+        }},
+        upsert=True
+    )
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7 * 24 * 60 * 60,
+        path="/"
+    )
+    
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    
+    return {
+        "user_id": user_id,
+        "email": email,
+        "first_name": user.get("first_name", name),
+        "photo": user.get("photo", picture),
+        "token": session_token
+    }
+
+@api_router.get("/auth/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    """Get current user profile"""
+    user_data = {k: v for k, v in current_user.items() if k != "password"}
+    return user_data
+
+@api_router.post("/auth/logout")
+async def logout(request: Request, response: Response, current_user: dict = Depends(get_current_user)):
+    """Logout user"""
+    await db.user_sessions.delete_one({"user_id": current_user["user_id"]})
+    response.delete_cookie("session_token", path="/")
+    return {"message": "Logged out successfully"}
+
+# ======================= USER ENDPOINTS =======================
+
+@api_router.get("/users/profile", response_model=UserProfile)
+async def get_profile(current_user: dict = Depends(get_current_user)):
+    """Get current user's profile"""
+    return UserProfile(**current_user)
+
+@api_router.put("/users/profile")
+async def update_profile(profile_data: UserProfileUpdate, current_user: dict = Depends(get_current_user)):
+    """Update current user's profile"""
+    update_data = {k: v for k, v in profile_data.dict().items() if v is not None}
+    
+    if update_data:
+        await db.users.update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": update_data}
+        )
+    
+    updated_user = await db.users.find_one({"user_id": current_user["user_id"]}, {"_id": 0, "password": 0})
+    return updated_user
+
+@api_router.get("/users/{user_id}")
+async def get_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get another user's public profile"""
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password": 0, "email": 0, "blocked_users": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@api_router.post("/users/block/{user_id}")
+async def block_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Block a user"""
+    if user_id == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$addToSet": {"blocked_users": user_id}}
+    )
+    return {"message": "User blocked"}
+
+@api_router.post("/users/unblock/{user_id}")
+async def unblock_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Unblock a user"""
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$pull": {"blocked_users": user_id}}
+    )
+    return {"message": "User unblocked"}
+
+@api_router.get("/users/blocked")
+async def get_blocked_users(current_user: dict = Depends(get_current_user)):
+    """Get list of blocked users"""
+    blocked_ids = current_user.get("blocked_users", [])
+    if not blocked_ids:
+        return []
+    
+    blocked_users = await db.users.find(
+        {"user_id": {"$in": blocked_ids}},
+        {"_id": 0, "user_id": 1, "first_name": 1, "photo": 1}
+    ).to_list(100)
+    return blocked_users
+
+# ======================= EVENT ENDPOINTS =======================
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate distance in km between two coordinates using Haversine formula"""
+    R = 6371  # Earth's radius in km
+    
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lon = math.radians(lon2 - lon1)
+    
+    a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    
+    return R * c
+
+@api_router.post("/events", response_model=EventResponse)
+async def create_event(event_data: EventCreate, current_user: dict = Depends(get_current_user)):
+    """Create a new event (New School)"""
+    # Check subscription limits
+    tier = current_user.get("subscription_tier", "free")
+    events_created = current_user.get("events_created_this_month", 0)
+    
+    if tier == "free" and events_created >= 1:
+        raise HTTPException(status_code=403, detail="Free tier limit reached. Upgrade to create more events.")
+    elif tier == "discovery" and events_created >= 2:
+        raise HTTPException(status_code=403, detail="Discovery tier limit reached. Upgrade to Explorer for unlimited events.")
+    
+    event_id = f"event_{uuid.uuid4().hex[:12]}"
+    
+    event_doc = {
+        "event_id": event_id,
+        "name": event_data.name,
+        "description": event_data.description,
+        "location_name": event_data.location_name,
+        "latitude": event_data.latitude,
+        "longitude": event_data.longitude,
+        "max_participants": event_data.max_participants,
+        "current_participants": 1,
+        "duration_hours": event_data.duration_hours,
+        "desired_nationalities": event_data.desired_nationalities,
+        "theme": event_data.theme,
+        "photo": event_data.photo,
+        "creator_id": current_user["user_id"],
+        "creator_name": current_user["first_name"],
+        "creator_photo": current_user.get("photo"),
+        "participants": [{
+            "user_id": current_user["user_id"],
+            "first_name": current_user["first_name"],
+            "photo": current_user.get("photo"),
+            "joined_at": datetime.now(timezone.utc).isoformat()
+        }],
+        "status": "active",
+        "created_at": datetime.now(timezone.utc),
+        "start_time": event_data.start_time or datetime.now(timezone.utc),
+        "is_full": False
+    }
+    
+    await db.events.insert_one(event_doc)
+    
+    # Update user's event count
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"events_created_this_month": 1}}
+    )
+    
+    event_doc.pop("_id", None)
+    return EventResponse(**event_doc)
+
+@api_router.get("/events", response_model=List[EventResponse])
+async def get_events(
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    radius_km: float = 50,
+    theme: Optional[str] = None,
+    search: Optional[str] = None,
+    language: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get events with optional filters"""
+    query = {"status": "active"}
+    
+    # Text search
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}},
+            {"location_name": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Theme filter
+    if theme:
+        query["theme"] = theme
+    
+    # Language filter (assuming language is stored in desired_nationalities or we add a languages field)
+    if language:
+        query["desired_nationalities"] = language
+    
+    events = await db.events.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Filter by distance if coordinates provided
+    if latitude is not None and longitude is not None:
+        filtered_events = []
+        for event in events:
+            distance = calculate_distance(latitude, longitude, event["latitude"], event["longitude"])
+            if distance <= radius_km:
+                event["distance_km"] = round(distance, 2)
+                filtered_events.append(event)
+        events = sorted(filtered_events, key=lambda x: x.get("distance_km", 0))
+    
+    return [EventResponse(**event) for event in events]
+
+@api_router.get("/events/nearby")
+async def get_nearby_events(
+    latitude: float,
+    longitude: float,
+    radius_km: float = 10,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get events near a specific location"""
+    events = await db.events.find({"status": "active"}, {"_id": 0}).to_list(500)
+    
+    nearby_events = []
+    for event in events:
+        distance = calculate_distance(latitude, longitude, event["latitude"], event["longitude"])
+        if distance <= radius_km:
+            event["distance_km"] = round(distance, 2)
+            nearby_events.append(event)
+    
+    return sorted(nearby_events, key=lambda x: x["distance_km"])
+
+@api_router.get("/events/{event_id}", response_model=EventResponse)
+async def get_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a specific event"""
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return EventResponse(**event)
+
+@api_router.post("/events/{event_id}/join")
+async def join_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    """Join an event"""
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    if event["is_full"]:
+        raise HTTPException(status_code=400, detail="Event is full")
+    
+    # Check if already joined
+    participant_ids = [p["user_id"] for p in event.get("participants", [])]
+    if current_user["user_id"] in participant_ids:
+        raise HTTPException(status_code=400, detail="Already joined this event")
+    
+    # Check subscription limits
+    tier = current_user.get("subscription_tier", "free")
+    events_joined = current_user.get("events_joined_this_month", 0)
+    
+    if tier == "free" and events_joined >= 2:
+        raise HTTPException(status_code=403, detail="Free tier limit reached. Upgrade to join more events.")
+    elif tier == "discovery" and events_joined >= 2:
+        raise HTTPException(status_code=403, detail="Discovery tier limit reached. Upgrade to Explorer for unlimited events.")
+    
+    new_participant = {
+        "user_id": current_user["user_id"],
+        "first_name": current_user["first_name"],
+        "photo": current_user.get("photo"),
+        "joined_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    new_count = event["current_participants"] + 1
+    is_full = new_count >= event["max_participants"]
+    
+    await db.events.update_one(
+        {"event_id": event_id},
+        {
+            "$push": {"participants": new_participant},
+            "$inc": {"current_participants": 1},
+            "$set": {"is_full": is_full}
+        }
+    )
+    
+    # Update user's joined count
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$inc": {"events_joined_this_month": 1}}
+    )
+    
+    return {"message": "Successfully joined the event", "is_full": is_full}
+
+@api_router.post("/events/{event_id}/leave")
+async def leave_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    """Leave an event"""
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    if event["creator_id"] == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="Creator cannot leave the event. Delete it instead.")
+    
+    await db.events.update_one(
+        {"event_id": event_id},
+        {
+            "$pull": {"participants": {"user_id": current_user["user_id"]}},
+            "$inc": {"current_participants": -1},
+            "$set": {"is_full": False}
+        }
+    )
+    
+    return {"message": "Successfully left the event"}
+
+@api_router.delete("/events/{event_id}")
+async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete an event (creator only)"""
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    if event["creator_id"] != current_user["user_id"]:
+        raise HTTPException(status_code=403, detail="Only the creator can delete this event")
+    
+    await db.events.delete_one({"event_id": event_id})
+    await db.messages.delete_many({"event_id": event_id})
+    
+    return {"message": "Event deleted successfully"}
+
+@api_router.get("/events/user/created")
+async def get_user_created_events(current_user: dict = Depends(get_current_user)):
+    """Get events created by the current user"""
+    events = await db.events.find(
+        {"creator_id": current_user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return events
+
+@api_router.get("/events/user/joined")
+async def get_user_joined_events(current_user: dict = Depends(get_current_user)):
+    """Get events the current user has joined"""
+    events = await db.events.find(
+        {"participants.user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return events
+
+# ======================= MESSAGING ENDPOINTS =======================
+
+# Simple moderation filter
+BAD_WORDS = ["spam", "scam", "hate", "violence"]  # Simplified, replace with Perspective API
+
+def moderate_content(content: str) -> bool:
+    """Basic content moderation - returns True if content is acceptable"""
+    content_lower = content.lower()
+    for word in BAD_WORDS:
+        if word in content_lower:
+            return False
+    return True
+
+@api_router.post("/events/{event_id}/messages", response_model=MessageResponse)
+async def send_message(event_id: str, message_data: MessageCreate, current_user: dict = Depends(get_current_user)):
+    """Send a message in an event chat"""
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Check if user is a participant
+    participant_ids = [p["user_id"] for p in event.get("participants", [])]
+    if current_user["user_id"] not in participant_ids:
+        raise HTTPException(status_code=403, detail="Must join the event to send messages")
+    
+    # Moderate content
+    if message_data.message_type == "text" and not moderate_content(message_data.content):
+        raise HTTPException(status_code=400, detail="Message contains inappropriate content")
+    
+    message_id = f"msg_{uuid.uuid4().hex[:12]}"
+    
+    message_doc = {
+        "message_id": message_id,
+        "event_id": event_id,
+        "sender_id": current_user["user_id"],
+        "sender_name": current_user["first_name"],
+        "sender_photo": current_user.get("photo"),
+        "content": message_data.content,
+        "message_type": message_data.message_type,
+        "created_at": datetime.now(timezone.utc),
+        "is_read": False
+    }
+    
+    await db.messages.insert_one(message_doc)
+    message_doc.pop("_id", None)
+    
+    return MessageResponse(**message_doc)
+
+@api_router.get("/events/{event_id}/messages", response_model=List[MessageResponse])
+async def get_messages(
+    event_id: str,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get messages for an event chat"""
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Check if user is a participant
+    participant_ids = [p["user_id"] for p in event.get("participants", [])]
+    if current_user["user_id"] not in participant_ids:
+        raise HTTPException(status_code=403, detail="Must join the event to view messages")
+    
+    # Get blocked users to filter out their messages
+    blocked_users = current_user.get("blocked_users", [])
+    
+    query = {"event_id": event_id}
+    if blocked_users:
+        query["sender_id"] = {"$nin": blocked_users}
+    
+    messages = await db.messages.find(query, {"_id": 0}).sort("created_at", 1).skip(skip).limit(limit).to_list(limit)
+    
+    return [MessageResponse(**msg) for msg in messages]
+
+@api_router.get("/chats")
+async def get_user_chats(current_user: dict = Depends(get_current_user)):
+    """Get all chats (events) the user is part of with last message"""
+    events = await db.events.find(
+        {"participants.user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    chats = []
+    for event in events:
+        # Get last message
+        last_message = await db.messages.find_one(
+            {"event_id": event["event_id"]},
+            {"_id": 0},
+            sort=[("created_at", -1)]
+        )
+        
+        # Count unread messages
+        unread_count = await db.messages.count_documents({
+            "event_id": event["event_id"],
+            "sender_id": {"$ne": current_user["user_id"]},
+            "is_read": False
+        })
+        
+        chats.append({
+            "event_id": event["event_id"],
+            "event_name": event["name"],
+            "event_photo": event.get("photo"),
+            "participants_count": event["current_participants"],
+            "last_message": last_message,
+            "unread_count": unread_count
+        })
+    
+    # Sort by last message time
+    chats.sort(key=lambda x: x["last_message"]["created_at"] if x["last_message"] else datetime.min, reverse=True)
+    
+    return chats
+
+# ======================= SUBSCRIPTION ENDPOINTS (MOCK) =======================
+
+SUBSCRIPTION_TIERS = {
+    "free": {
+        "tier": "free",
+        "price": 0,
+        "features": ["1 event creation per month", "2 event joins per month", "Basic chat"]
+    },
+    "discovery": {
+        "tier": "discovery",
+        "price": 4.99,
+        "features": ["2 event creations per month", "2 event joins per month", "Full chat features", "Priority support"]
+    },
+    "explorer": {
+        "tier": "explorer",
+        "price": 9.99,
+        "features": ["Unlimited event creations", "Unlimited event joins", "Advanced filters", "Full chat features", "Priority support"]
+    },
+    "ambassador": {
+        "tier": "ambassador",
+        "price": 14.99,
+        "features": ["All Explorer features", "Access to exclusive events", "Profile badge", "Early access to new features", "VIP support"]
+    }
+}
+
+@api_router.get("/subscriptions/tiers")
+async def get_subscription_tiers():
+    """Get all subscription tiers and their features"""
+    return list(SUBSCRIPTION_TIERS.values())
+
+@api_router.get("/subscriptions/current")
+async def get_current_subscription(current_user: dict = Depends(get_current_user)):
+    """Get current user's subscription"""
+    tier = current_user.get("subscription_tier", "free")
+    return {
+        "current_tier": tier,
+        "tier_info": SUBSCRIPTION_TIERS.get(tier, SUBSCRIPTION_TIERS["free"]),
+        "events_created_this_month": current_user.get("events_created_this_month", 0),
+        "events_joined_this_month": current_user.get("events_joined_this_month", 0)
+    }
+
+@api_router.post("/subscriptions/upgrade")
+async def upgrade_subscription(subscription: SubscriptionUpdate, current_user: dict = Depends(get_current_user)):
+    """Upgrade subscription (MOCK - In production, integrate with RevenueCat)"""
+    if subscription.tier not in SUBSCRIPTION_TIERS:
+        raise HTTPException(status_code=400, detail="Invalid subscription tier")
+    
+    # MOCK: In production, this would verify payment through RevenueCat
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"subscription_tier": subscription.tier}}
+    )
+    
+    return {
+        "message": f"Successfully upgraded to {subscription.tier}",
+        "tier_info": SUBSCRIPTION_TIERS[subscription.tier]
+    }
+
+# ======================= REPORT ENDPOINTS =======================
+
+@api_router.post("/reports")
+async def create_report(report_data: ReportCreate, current_user: dict = Depends(get_current_user)):
+    """Report a user, event, or message"""
+    report_id = f"report_{uuid.uuid4().hex[:12]}"
+    
+    report_doc = {
+        "report_id": report_id,
+        "reporter_id": current_user["user_id"],
+        "reported_id": report_data.reported_id,
+        "report_type": report_data.report_type,
+        "reason": report_data.reason,
+        "description": report_data.description,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.reports.insert_one(report_doc)
+    
+    return {"message": "Report submitted successfully", "report_id": report_id}
+
+# ======================= MISC ENDPOINTS =======================
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "New School API v1.0", "status": "running"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+# Languages and Nationalities lists
+LANGUAGES = ["Français", "English", "Español", "Deutsch", "Italiano", "Português", "中文", "日本語", "한국어", "العربية", "हिन्दी", "Русский"]
+NATIONALITIES = ["French", "American", "British", "Spanish", "German", "Italian", "Portuguese", "Chinese", "Japanese", "Korean", "Brazilian", "Mexican", "Canadian", "Australian", "Indian", "Russian", "Other"]
+THEMES = ["Food & Drinks", "Sports", "Music", "Art & Culture", "Outdoor", "Nightlife", "Business", "Language Exchange", "Travel", "Gaming", "Other"]
 
-# Include the router in the main app
+@api_router.get("/config/languages")
+async def get_languages():
+    return LANGUAGES
+
+@api_router.get("/config/nationalities")
+async def get_nationalities():
+    return NATIONALITIES
+
+@api_router.get("/config/themes")
+async def get_themes():
+    return THEMES
+
+# Include router
 app.include_router(api_router)
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -63,12 +911,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+@app.on_event("startup")
+async def startup_db():
+    # Create indexes
+    await db.users.create_index("user_id", unique=True)
+    await db.users.create_index("email", unique=True)
+    await db.events.create_index("event_id", unique=True)
+    await db.events.create_index([("latitude", 1), ("longitude", 1)])
+    await db.messages.create_index("event_id")
+    await db.messages.create_index([("event_id", 1), ("created_at", 1)])
+    await db.user_sessions.create_index("user_id", unique=True)
+    await db.user_sessions.create_index("session_token")
+    logger.info("Database indexes created")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
