@@ -34,7 +34,7 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "single",
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -46,18 +46,6 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#0A0A0A"
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Permettre à New School d'utiliser votre position pour trouver des événements."
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Permettre à New School d'accéder à vos photos."
         }
       ]
     ],
