@@ -519,4 +519,48 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
   },
+  genderContainer: {
+    gap: 10,
+  },
+  genderOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 14,
+    gap: 12,
+  },
+  genderOptionActive: {
+    backgroundColor: '#D946EF',
+  },
+  genderOptionText: {
+    color: '#888',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  genderOptionTextActive: {
+    color: '#FFF',
+  },
+  ageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ageChip: {
+    backgroundColor: '#1A1A1A',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  ageChipActive: {
+    backgroundColor: '#D946EF',
+  },
+  ageChipText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  ageChipTextActive: {
+    color: '#FFF',
+  },
 });
