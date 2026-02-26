@@ -53,6 +53,8 @@ export default function CreateEventScreen() {
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
   const [photo, setPhoto] = useState<string | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<string>('all');
+  const [selectedAgeRange, setSelectedAgeRange] = useState<string>('all');
 
   useEffect(() => {
     getCurrentLocation();
