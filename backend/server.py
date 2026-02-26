@@ -597,7 +597,10 @@ async def create_event(event_data: EventCreate, current_user: dict = Depends(get
         "status": "active",
         "created_at": datetime.now(timezone.utc),
         "start_time": event_data.start_time or datetime.now(timezone.utc),
-        "is_full": False
+        "is_full": False,
+        "gender_filter": event_data.gender_filter,
+        "age_range_min": event_data.age_range_min,
+        "age_range_max": event_data.age_range_max
     }
     
     await db.events.insert_one(event_doc)
