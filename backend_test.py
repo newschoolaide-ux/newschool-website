@@ -63,6 +63,21 @@ def test_event_creation_with_filters():
         "Content-Type": "application/json"
     }
     
+    # Upgrade subscription to allow multiple events
+    print("\nUpgrading subscription to allow multiple events...")
+    
+    try:
+        upgrade_data = {"tier": "ambassador"}
+        response = requests.post(f"{BACKEND_URL}/subscriptions/upgrade", json=upgrade_data, headers=headers)
+        print(f"Subscription Upgrade Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            print("✅ Subscription upgraded to ambassador (unlimited events)")
+        else:
+            print(f"⚠️ Subscription upgrade failed, proceeding with free tier: {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ Network error during subscription upgrade: {e}")
+    
     # Test 2: Create event with gender_filter="women" and age range 25-35
     print("\nStep 2: Creating event with women filter and age range 25-35...")
     
