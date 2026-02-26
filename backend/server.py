@@ -443,6 +443,29 @@ async def logout(request: Request, response: Response, current_user: dict = Depe
     response.delete_cookie("session_token", path="/")
     return {"message": "Logged out successfully"}
 
+# ======================= PUSH NOTIFICATIONS ENDPOINT =======================
+
+class PushTokenUpdate(BaseModel):
+    push_token: str
+
+@api_router.post("/users/push-token")
+async def update_push_token(token_data: PushTokenUpdate, current_user: dict = Depends(get_current_user)):
+    """Register or update push notification token"""
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"push_token": token_data.push_token}}
+    )
+    return {"message": "Push token updated"}
+
+@api_router.delete("/users/push-token")
+async def remove_push_token(current_user: dict = Depends(get_current_user)):
+    """Remove push notification token"""
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$unset": {"push_token": ""}}
+    )
+    return {"message": "Push token removed"}
+
 # ======================= USER ENDPOINTS =======================
 
 @api_router.get("/users/profile", response_model=UserProfile)
