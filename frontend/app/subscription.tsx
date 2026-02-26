@@ -18,27 +18,25 @@ const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 interface Tier {
   tier: string;
   price: number;
+  monthly_limit: number;
   features: string[];
 }
 
 const TIER_ICONS: Record<string, string> = {
   free: 'gift-outline',
-  discovery: 'compass-outline',
-  explorer: 'globe-outline',
+  standard: 'rocket-outline',
   ambassador: 'star-outline',
 };
 
 const TIER_COLORS: Record<string, string> = {
   free: '#666',
-  discovery: '#4CAF50',
-  explorer: '#2196F3',
-  ambassador: '#D946EF',
+  standard: '#D946EF',
+  ambassador: '#FFD700',
 };
 
 const TIER_NAMES: Record<string, string> = {
   free: 'Gratuit',
-  discovery: 'Découverte',
-  explorer: 'Explorateur',
+  standard: 'Standard',
   ambassador: 'Ambassadeur',
 };
 
@@ -136,7 +134,7 @@ export default function SubscriptionScreen() {
           <Ionicons name="diamond" size={48} color="#D946EF" />
           <Text style={styles.introTitle}>Passez au niveau supérieur</Text>
           <Text style={styles.introText}>
-            Débloquez toutes les fonctionnalités de New School et créez des événements sans limite
+            Débloquez plus de créations et participations à des New School chaque mois
           </Text>
         </View>
 
@@ -151,7 +149,7 @@ export default function SubscriptionScreen() {
               style={[
                 styles.tierCard,
                 isCurrentTier && styles.tierCardActive,
-                { borderColor: TIER_COLORS[tier.tier] }
+                { borderColor: TIER_COLORS[tier.tier] || '#D946EF' }
               ]}
               onPress={() => handleUpgrade(tier.tier)}
               disabled={isCurrentTier || isDowngrade || tier.tier === 'free'}
@@ -159,18 +157,18 @@ export default function SubscriptionScreen() {
             >
               {tier.tier === 'ambassador' && (
                 <View style={styles.popularBadge}>
-                  <Text style={styles.popularBadgeText}>POPULAIRE</Text>
+                  <Text style={styles.popularBadgeText}>RECOMMANDÉ</Text>
                 </View>
               )}
               
               <View style={styles.tierHeader}>
-                <View style={[styles.tierIcon, { backgroundColor: TIER_COLORS[tier.tier] }]}>
-                  <Ionicons name={TIER_ICONS[tier.tier] as any} size={24} color="#FFF" />
+                <View style={[styles.tierIcon, { backgroundColor: TIER_COLORS[tier.tier] || '#D946EF' }]}>
+                  <Ionicons name={TIER_ICONS[tier.tier] as any || 'star'} size={24} color="#FFF" />
                 </View>
                 <View style={styles.tierInfo}>
-                  <Text style={styles.tierName}>{TIER_NAMES[tier.tier]}</Text>
+                  <Text style={styles.tierName}>{TIER_NAMES[tier.tier] || tier.tier}</Text>
                   <Text style={styles.tierPrice}>
-                    {tier.price === 0 ? 'Gratuit' : `${tier.price.toFixed(2)}€/mois`}
+                    {tier.price === 0 ? 'Gratuit' : `${tier.price.toFixed(2).replace('.', ',')}€/mois`}
                   </Text>
                 </View>
                 {isCurrentTier && (
@@ -181,10 +179,19 @@ export default function SubscriptionScreen() {
                 )}
               </View>
 
+              <View style={styles.limitBadge}>
+                <Ionicons name="calendar" size={16} color="#D946EF" />
+                <Text style={styles.limitText}>
+                  {tier.monthly_limit === -1 
+                    ? 'Illimité' 
+                    : `${tier.monthly_limit} création${tier.monthly_limit > 1 ? 's' : ''} ou participation${tier.monthly_limit > 1 ? 's' : ''} / mois`}
+                </Text>
+              </View>
+
               <View style={styles.featuresList}>
                 {tier.features.map((feature, featureIndex) => (
                   <View key={featureIndex} style={styles.featureItem}>
-                    <Ionicons name="checkmark-circle" size={18} color={TIER_COLORS[tier.tier]} />
+                    <Ionicons name="checkmark-circle" size={18} color={TIER_COLORS[tier.tier] || '#D946EF'} />
                     <Text style={styles.featureText}>{feature}</Text>
                   </View>
                 ))}
@@ -192,7 +199,7 @@ export default function SubscriptionScreen() {
 
               {isPremium && !isCurrentTier && !isDowngrade && (
                 <TouchableOpacity
-                  style={[styles.upgradeButton, { backgroundColor: TIER_COLORS[tier.tier] }]}
+                  style={[styles.upgradeButton, { backgroundColor: TIER_COLORS[tier.tier] || '#D946EF' }]}
                   onPress={() => handleUpgrade(tier.tier)}
                   disabled={upgrading === tier.tier}
                 >
@@ -280,19 +287,19 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   tierCardActive: {
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+    backgroundColor: 'rgba(217, 70, 239, 0.1)',
   },
   popularBadge: {
     position: 'absolute',
     top: -10,
     right: 16,
-    backgroundColor: '#D946EF',
+    backgroundColor: '#FFD700',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
   popularBadgeText: {
-    color: '#FFF',
+    color: '#000',
     fontSize: 10,
     fontWeight: '700',
   },
@@ -335,6 +342,21 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 12,
     fontWeight: '600',
+  },
+  limitBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(217, 70, 239, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginBottom: 16,
+    gap: 8,
+  },
+  limitText: {
+    color: '#D946EF',
+    fontSize: 14,
+    fontWeight: '500',
   },
   featuresList: {
     marginBottom: 16,
