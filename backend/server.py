@@ -977,7 +977,13 @@ async def create_report(report_data: ReportCreate, current_user: dict = Depends(
     
     await db.reports.insert_one(report_doc)
     
-    return {"message": "Report submitted successfully", "report_id": report_id}
+    # Check if user should be auto-banned (3+ reports)
+    if report_data.report_type == "user":
+        was_banned = await check_auto_ban(report_data.reported_id)
+        if was_banned:
+            return {"message": "Signalement enregistré. L'utilisateur a été automatiquement banni.", "report_id": report_id, "auto_banned": True}
+    
+    return {"message": "Signalement enregistré", "report_id": report_id}
 
 # ======================= MISC ENDPOINTS =======================
 
