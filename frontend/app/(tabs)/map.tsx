@@ -7,16 +7,28 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventStore, Event } from '../../stores/eventStore';
 
 const { width, height } = Dimensions.get('window');
+
+// Only import MapView on native platforms
+let MapView: any = null;
+let Marker: any = null;
+let PROVIDER_GOOGLE: any = null;
+
+if (Platform.OS !== 'web') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+  PROVIDER_GOOGLE = Maps.PROVIDER_GOOGLE;
+}
 
 export default function MapScreen() {
   const { token } = useAuth();
@@ -55,6 +67,70 @@ export default function MapScreen() {
     }
   };
 
+  // Web fallback - show list view
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.webHeader}>
+          <Text style={styles.webHeaderTitle}>Carte des événements</Text>
+          <Text style={styles.webHeaderSubtitle}>
+            La carte est disponible uniquement sur mobile. Voici la liste des événements à proximité :
+          </Text>
+        </View>
+
+        <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#FF6B35" style={{ marginTop: 40 }} />
+          ) : nearbyEvents.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="location-outline" size={48} color="#444" />
+              <Text style={styles.emptyText}>Aucun événement à proximité</Text>
+            </View>
+          ) : (
+            nearbyEvents.map((event) => (
+              <TouchableOpacity
+                key={event.event_id}
+                style={styles.webEventCard}
+                onPress={() => router.push(`/event/${event.event_id}`)}
+              >
+                <View style={styles.webEventIcon}>
+                  <Ionicons name="calendar" size={24} color="#FF6B35" />
+                </View>
+                <View style={styles.webEventInfo}>
+                  <Text style={styles.webEventName}>{event.name}</Text>
+                  <View style={styles.webEventLocation}>
+                    <Ionicons name="location" size={14} color="#888" />
+                    <Text style={styles.webEventLocationText}>{event.location_name}</Text>
+                  </View>
+                  <View style={styles.webEventMeta}>
+                    <View style={styles.webEventParticipants}>
+                      <Ionicons name="people" size={14} color="#FF6B35" />
+                      <Text style={styles.webEventParticipantsText}>
+                        {event.current_participants}/{event.max_participants}
+                      </Text>
+                    </View>
+                    {event.distance_km !== undefined && (
+                      <Text style={styles.webEventDistance}>{event.distance_km} km</Text>
+                    )}
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#666" />
+              </TouchableOpacity>
+            ))
+          )}
+        </ScrollView>
+
+        <TouchableOpacity
+          style={[styles.createButton, { bottom: insets.bottom + 20 }]}
+          onPress={() => router.push('/create-event')}
+        >
+          <Ionicons name="add" size={28} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Native map view
   if (!location) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
@@ -283,5 +359,94 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 107, 53, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Web-specific styles
+  webHeader: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A1A1A',
+  },
+  webHeaderTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 8,
+  },
+  webHeaderSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    lineHeight: 20,
+  },
+  webList: {
+    flex: 1,
+  },
+  webListContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  webEventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  webEventIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  webEventInfo: {
+    flex: 1,
+  },
+  webEventName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFF',
+    marginBottom: 4,
+  },
+  webEventLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+  },
+  webEventLocationText: {
+    color: '#888',
+    fontSize: 13,
+  },
+  webEventMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  webEventParticipants: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  webEventParticipantsText: {
+    color: '#FF6B35',
+    fontSize: 13,
+  },
+  webEventDistance: {
+    color: '#4CAF50',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    color: '#888',
+    fontSize: 16,
+    marginTop: 12,
   },
 });
