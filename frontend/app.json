@@ -15,7 +15,8 @@
         "NSLocationWhenInUseUsageDescription": "Trouver des événements près de vous",
         "NSLocationAlwaysUsageDescription": "Trouver des événements près de vous",
         "NSCameraUsageDescription": "Prendre des photos pour votre profil et événements",
-        "NSPhotoLibraryUsageDescription": "Sélectionner des photos pour votre profil et événements"
+        "NSPhotoLibraryUsageDescription": "Sélectionner des photos pour votre profil et événements",
+        "NSUserNotificationsUsageDescription": "Recevoir des notifications pour les nouveaux participants et messages"
       }
     },
     "android": {
@@ -29,7 +30,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
-        "READ_EXTERNAL_STORAGE"
+        "READ_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {
