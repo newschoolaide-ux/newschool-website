@@ -20,8 +20,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { useEventStore } from '../stores/eventStore';
 
-const THEMES = ['Gastronomie', 'Sport', 'Musique', 'Art 'Art & Culture' Culture', 'Plein air', 'Vie nocturne', 'Business', 'Échange linguistique', 'Voyage', 'Jeux', 'Autre'];
-const NATIONALITIES = ['French', 'American', 'British', 'Spanish', 'German', 'Italian', 'Portuguese', 'Chinese', 'Japanese', 'Korean', 'Brazilian', 'Mexican', 'Canadian', 'Australian', 'Indian', 'Russian', 'Autre'];
+const THEMES = ['Gastronomie', 'Sport', 'Musique', 'Art & Culture', 'Plein air', 'Vie nocturne', 'Business', 'Échange linguistique', 'Voyage', 'Jeux', 'Autre'];
+const NATIONALITIES = ['Français', 'Américain', 'Britannique', 'Espagnol', 'Allemand', 'Italien', 'Portugais', 'Chinois', 'Japonais', 'Coréen', 'Brésilien', 'Mexicain', 'Canadien', 'Australien', 'Indien', 'Russe', 'Autre'];
 
 export default function CreateEventScreen() {
   const { token } = useAuth();
