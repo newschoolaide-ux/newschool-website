@@ -17,7 +17,7 @@ import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventStore, Event } from '../../stores/eventStore';
 
-const THEMES = ['Gastronomie', 'Sport', 'Musique', 'Art 'Art & Culture' Culture', 'Plein air', 'Vie nocturne', 'Business', 'Échange linguistique', 'Voyage', 'Jeux', 'Autre'];
+const THEMES = ['Gastronomie', 'Sport', 'Musique', 'Art & Culture', 'Plein air', 'Vie nocturne', 'Business', 'Échange linguistique', 'Voyage', 'Jeux', 'Autre'];
 
 export default function HomeScreen() {
   const { user, token } = useAuth();
