@@ -270,6 +270,57 @@ export default function CreateEventScreen() {
         </View>
 
         <View style={styles.inputGroup}>
+          <Text style={styles.label}>Ouvert à</Text>
+          <View style={styles.genderContainer}>
+            {GENDER_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  styles.genderOption,
+                  selectedGender === option.id && styles.genderOptionActive
+                ]}
+                onPress={() => setSelectedGender(option.id)}
+              >
+                <Ionicons
+                  name={option.icon as any}
+                  size={24}
+                  color={selectedGender === option.id ? '#FFF' : '#888'}
+                />
+                <Text style={[
+                  styles.genderOptionText,
+                  selectedGender === option.id && styles.genderOptionTextActive
+                ]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Tranche d'âge</Text>
+          <View style={styles.ageContainer}>
+            {AGE_RANGES.map((range) => (
+              <TouchableOpacity
+                key={range.id}
+                style={[
+                  styles.ageChip,
+                  selectedAgeRange === range.id && styles.ageChipActive
+                ]}
+                onPress={() => setSelectedAgeRange(range.id)}
+              >
+                <Text style={[
+                  styles.ageChipText,
+                  selectedAgeRange === range.id && styles.ageChipTextActive
+                ]}>
+                  {range.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Thème</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
             {THEMES.map((theme) => (
