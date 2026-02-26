@@ -807,11 +807,11 @@ async def send_message(event_id: str, message_data: MessageCreate, current_user:
     # Check if user is a participant
     participant_ids = [p["user_id"] for p in event.get("participants", [])]
     if current_user["user_id"] not in participant_ids:
-        raise HTTPException(status_code=403, detail="Must join the event to send messages")
+        raise HTTPException(status_code=403, detail="Vous devez rejoindre l'événement pour envoyer des messages")
     
     # Moderate content
     if message_data.message_type == "text" and not moderate_content(message_data.content):
-        raise HTTPException(status_code=400, detail="Message contains inappropriate content")
+        raise HTTPException(status_code=400, detail="Message contient du contenu inapproprié")
     
     message_id = f"msg_{uuid.uuid4().hex[:12]}"
     
@@ -829,6 +829,9 @@ async def send_message(event_id: str, message_data: MessageCreate, current_user:
     
     await db.messages.insert_one(message_doc)
     message_doc.pop("_id", None)
+    
+    # Send push notifications to other participants
+    await notify_chat_participants(event_id, current_user["user_id"], current_user["first_name"], message_data.content)
     
     return MessageResponse(**message_doc)
 
