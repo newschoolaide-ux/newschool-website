@@ -22,6 +22,19 @@ import { useEventStore } from '../stores/eventStore';
 
 const THEMES = ['Gastronomie', 'Sport', 'Musique', 'Art & Culture', 'Plein air', 'Vie nocturne', 'Business', 'Échange linguistique', 'Voyage', 'Jeux', 'Autre'];
 const NATIONALITIES = ['Français', 'Américain', 'Britannique', 'Espagnol', 'Allemand', 'Italien', 'Portugais', 'Chinois', 'Japonais', 'Coréen', 'Brésilien', 'Mexicain', 'Canadien', 'Australien', 'Indien', 'Russe', 'Autre'];
+const GENDER_OPTIONS = [
+  { id: 'all', label: 'Tout le monde', icon: 'people' },
+  { id: 'women', label: 'Femmes uniquement', icon: 'female' },
+  { id: 'men', label: 'Hommes uniquement', icon: 'male' },
+];
+const AGE_RANGES = [
+  { id: '18-25', label: '18-25 ans', min: 18, max: 25 },
+  { id: '25-35', label: '25-35 ans', min: 25, max: 35 },
+  { id: '35-45', label: '35-45 ans', min: 35, max: 45 },
+  { id: '45-55', label: '45-55 ans', min: 45, max: 55 },
+  { id: '55+', label: '55+ ans', min: 55, max: 100 },
+  { id: 'all', label: 'Tous âges', min: null, max: null },
+];
 
 export default function CreateEventScreen() {
   const { token } = useAuth();
