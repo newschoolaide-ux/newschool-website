@@ -17,9 +17,8 @@ import { useEventStore } from '../../stores/eventStore';
 
 const SUBSCRIPTION_TIERS = {
   free: { name: 'Gratuit', color: '#666' },
-  discovery: { name: 'Découverte', color: '#4CAF50' },
-  explorer: { name: 'Explorateur', color: '#2196F3' },
-  ambassador: { name: 'Ambassadeur', color: '#D946EF' },
+  standard: { name: 'Standard', color: '#D946EF' },
+  ambassador: { name: 'Ambassadeur', color: '#FFD700' },
 };
 
 export default function ProfileScreen() {
