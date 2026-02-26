@@ -19,7 +19,7 @@ const SUBSCRIPTION_TIERS = {
   free: { name: 'Gratuit', color: '#666' },
   discovery: { name: 'Découverte', color: '#4CAF50' },
   explorer: { name: 'Explorateur', color: '#2196F3' },
-  ambassador: { name: 'Ambassadeur', color: '#FF6B35' },
+  ambassador: { name: 'Ambassadeur', color: '#D946EF' },
 };
 
 export default function ProfileScreen() {
@@ -74,7 +74,7 @@ export default function ProfileScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor="#FF6B35"
+          tintColor="#D946EF"
         />
       }
     >
@@ -157,7 +157,7 @@ export default function ProfileScreen() {
           onPress={() => router.push('/create-event')}
         >
           <View style={styles.menuItemLeft}>
-            <View style={[styles.menuIcon, { backgroundColor: '#FF6B35' }]}>
+            <View style={[styles.menuIcon, { backgroundColor: '#D946EF' }]}>
               <Ionicons name="add" size={20} color="#FFF" />
             </View>
             <Text style={styles.menuItemText}>Créer un événement</Text>
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   avatarPlaceholder: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF6B35',
+    color: '#D946EF',
   },
   statLabel: {
     fontSize: 12,

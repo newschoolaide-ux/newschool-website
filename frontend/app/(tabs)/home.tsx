@@ -124,7 +124,7 @@ export default function HomeScreen() {
             <Text style={styles.creatorName}>{event.creator_name}</Text>
           </View>
           <View style={styles.participantsBadge}>
-            <Ionicons name="people" size={14} color="#FF6B35" />
+            <Ionicons name="people" size={14} color="#D946EF" />
             <Text style={styles.participantsText}>
               {event.current_participants}/{event.max_participants}
             </Text>
@@ -203,13 +203,13 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#FF6B35"
+            tintColor="#D946EF"
           />
         }
       >
         {isLoading && events.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF6B35" />
+            <ActivityIndicator size="large" color="#D946EF" />
           </View>
         ) : events.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   themeChipActive: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
   },
   themeChipText: {
     color: '#888',
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   themeBadge: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eventDistance: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   participantsText: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   emptyButton: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,

@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 42,
     fontWeight: 'bold',
-    color: '#FF6B35',
+    color: '#D946EF',
     marginBottom: 12,
   },
   subtitle: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     borderRadius: 12,
     height: 56,
     alignItems: 'center',
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   registerLink: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 15,
     fontWeight: '600',
   },

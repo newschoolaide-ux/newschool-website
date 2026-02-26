@@ -278,14 +278,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   ownMessageBubble: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 4,
   },
   senderName: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FF6B35',
+    color: '#D946EF',
     marginBottom: 4,
   },
   messageText: {
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
   },

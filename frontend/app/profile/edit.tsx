@@ -117,7 +117,7 @@ export default function EditProfileScreen() {
         <Text style={styles.headerTitle}>Modifier le profil</Text>
         <TouchableOpacity onPress={handleSave} disabled={isLoading}>
           {isLoading ? (
-            <ActivityIndicator color="#FF6B35" />
+            <ActivityIndicator color="#D946EF" />
           ) : (
             <Text style={styles.saveButton}>Enregistrer</Text>
           )}
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   saveButton: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
   },
   avatarPlaceholder: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   languageChipActive: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
   },
   languageChipText: {
     color: '#888',

@@ -212,9 +212,9 @@ export default function CreateEventScreen() {
               disabled={isGettingLocation}
             >
               {isGettingLocation ? (
-                <ActivityIndicator size="small" color="#FF6B35" />
+                <ActivityIndicator size="small" color="#D946EF" />
               ) : (
-                <Ionicons name="locate" size={22} color="#FF6B35" />
+                <Ionicons name="locate" size={22} color="#D946EF" />
               )}
             </TouchableOpacity>
           </View>
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chipActive: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
   },
   chipText: {
     color: '#888',
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#1A1A1A',
   },
   submitButton: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     borderRadius: 12,
     height: 54,
     alignItems: 'center',

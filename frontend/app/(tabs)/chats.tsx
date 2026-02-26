@@ -111,13 +111,13 @@ export default function ChatsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#FF6B35"
+            tintColor="#D946EF"
           />
         }
       >
         {isLoading && chats.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF6B35" />
+            <ActivityIndicator size="large" color="#D946EF" />
           </View>
         ) : chats.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   unreadBadge: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     minWidth: 20,
     height: 20,
     borderRadius: 10,
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   emptyButton: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,

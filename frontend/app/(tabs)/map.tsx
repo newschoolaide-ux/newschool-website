@@ -80,7 +80,7 @@ export default function MapScreen() {
 
         <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
           {isLoading ? (
-            <ActivityIndicator size="large" color="#FF6B35" style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color="#D946EF" style={{ marginTop: 40 }} />
           ) : nearbyEvents.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="location-outline" size={48} color="#444" />
@@ -94,7 +94,7 @@ export default function MapScreen() {
                 onPress={() => router.push(`/event/${event.event_id}`)}
               >
                 <View style={styles.webEventIcon}>
-                  <Ionicons name="calendar" size={24} color="#FF6B35" />
+                  <Ionicons name="calendar" size={24} color="#D946EF" />
                 </View>
                 <View style={styles.webEventInfo}>
                   <Text style={styles.webEventName}>{event.name}</Text>
@@ -104,7 +104,7 @@ export default function MapScreen() {
                   </View>
                   <View style={styles.webEventMeta}>
                     <View style={styles.webEventParticipants}>
-                      <Ionicons name="people" size={14} color="#FF6B35" />
+                      <Ionicons name="people" size={14} color="#D946EF" />
                       <Text style={styles.webEventParticipantsText}>
                         {event.current_participants}/{event.max_participants}
                       </Text>
@@ -134,7 +134,7 @@ export default function MapScreen() {
   if (!location) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#D946EF" />
         <Text style={styles.loadingText}>Chargement de la carte...</Text>
       </View>
     );
@@ -203,7 +203,7 @@ export default function MapScreen() {
               <Text style={styles.eventLocation}>{selectedEvent.location_name}</Text>
             </View>
             <View style={styles.eventInfo}>
-              <Ionicons name="people" size={14} color="#FF6B35" />
+              <Ionicons name="people" size={14} color="#D946EF" />
               <Text style={styles.participantsText}>
                 {selectedEvent.current_participants}/{selectedEvent.max_participants} participants
               </Text>
@@ -215,7 +215,7 @@ export default function MapScreen() {
             )}
           </View>
           <View style={styles.eventCardArrow}>
-            <Ionicons name="chevron-forward" size={24} color="#FF6B35" />
+            <Ionicons name="chevron-forward" size={24} color="#D946EF" />
           </View>
         </TouchableOpacity>
       )}
@@ -268,14 +268,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: '#FFF',
   },
   markerSelected: {
-    backgroundColor: '#FF4500',
+    backgroundColor: '#C026D3',
     transform: [{ scale: 1.2 }],
   },
   createButton: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   participantsText: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 13,
   },
   themeBadge: {
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   themeBadgeText: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 12,
     fontWeight: '500',
   },
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   webEventParticipantsText: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 13,
   },
   webEventDistance: {

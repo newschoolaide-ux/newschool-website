@@ -32,7 +32,7 @@ const TIER_COLORS: Record<string, string> = {
   free: '#666',
   discovery: '#4CAF50',
   explorer: '#2196F3',
-  ambassador: '#FF6B35',
+  ambassador: '#D946EF',
 };
 
 const TIER_NAMES: Record<string, string> = {
@@ -116,7 +116,7 @@ export default function SubscriptionScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#D946EF" />
       </View>
     );
   }
@@ -133,7 +133,7 @@ export default function SubscriptionScreen() {
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={styles.intro}>
-          <Ionicons name="diamond" size={48} color="#FF6B35" />
+          <Ionicons name="diamond" size={48} color="#D946EF" />
           <Text style={styles.introTitle}>Passez au niveau supérieur</Text>
           <Text style={styles.introText}>
             Débloquez toutes les fonctionnalités de New School et créez des événements sans limite
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: 16,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,

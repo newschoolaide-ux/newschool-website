@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   registerButton: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     borderRadius: 12,
     height: 56,
     alignItems: 'center',
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   loginLink: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 15,
     fontWeight: '600',
   },

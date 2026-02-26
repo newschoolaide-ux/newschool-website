@@ -15,7 +15,7 @@ export default function TabsLayout() {
           styles.tabBar,
           { paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }
         ],
-        tabBarActiveTintColor: '#FF6B35',
+        tabBarActiveTintColor: '#D946EF',
         tabBarInactiveTintColor: '#666',
         tabBarLabelStyle: styles.tabLabel,
       }}

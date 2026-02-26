@@ -118,7 +118,7 @@ export default function EventDetailScreen() {
   if (isLoading || !currentEvent) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#D946EF" />
       </View>
     );
   }
@@ -164,11 +164,11 @@ export default function EventDetailScreen() {
 
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
-              <Ionicons name="location" size={20} color="#FF6B35" />
+              <Ionicons name="location" size={20} color="#D946EF" />
               <Text style={styles.infoText}>{currentEvent.location_name}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={20} color="#FF6B35" />
+              <Ionicons name="calendar" size={20} color="#D946EF" />
               <Text style={styles.infoText}>
                 {currentEvent.start_time
                   ? format(new Date(currentEvent.start_time), "EEEE d MMMM 'à' HH:mm", { locale: fr })
@@ -176,11 +176,11 @@ export default function EventDetailScreen() {
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <Ionicons name="time" size={20} color="#FF6B35" />
+              <Ionicons name="time" size={20} color="#D946EF" />
               <Text style={styles.infoText}>Durée: {currentEvent.duration_hours}h</Text>
             </View>
             <View style={styles.infoRow}>
-              <Ionicons name="people" size={20} color="#FF6B35" />
+              <Ionicons name="people" size={20} color="#D946EF" />
               <Text style={styles.infoText}>
                 {currentEvent.current_participants}/{currentEvent.max_participants} participants
               </Text>
@@ -249,7 +249,7 @@ export default function EventDetailScreen() {
                   <Text style={styles.participantName}>{participant.first_name}</Text>
                   {participant.user_id === currentEvent.creator_id && (
                     <View style={styles.organizerBadge}>
-                      <Ionicons name="star" size={12} color="#FF6B35" />
+                      <Ionicons name="star" size={12} color="#D946EF" />
                     </View>
                   )}
                 </View>
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   themeBadge: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chatLink: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   creatorAvatarPlaceholder: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   creatorLabel: {
-    color: '#FF6B35',
+    color: '#D946EF',
     fontSize: 12,
     marginTop: 2,
   },
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   },
   joinButton: {
     flex: 1,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     borderRadius: 12,
     height: 52,
     alignItems: 'center',
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
   chatButton: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#D946EF',
     borderRadius: 12,
     height: 52,
     alignItems: 'center',
