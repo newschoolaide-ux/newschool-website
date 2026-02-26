@@ -725,7 +725,10 @@ async def join_event(event_id: str, current_user: dict = Depends(get_current_use
         {"$inc": {"events_joined_this_month": 1}}
     )
     
-    return {"message": "Successfully joined the event", "is_full": is_full}
+    # Send push notification to event creator
+    await notify_event_creator(event_id, current_user["first_name"])
+    
+    return {"message": "Vous avez rejoint la New School !", "is_full": is_full}
 
 @api_router.post("/events/{event_id}/leave")
 async def leave_event(event_id: str, current_user: dict = Depends(get_current_user)):
