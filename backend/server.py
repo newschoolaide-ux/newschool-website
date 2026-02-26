@@ -798,22 +798,20 @@ SUBSCRIPTION_TIERS = {
     "free": {
         "tier": "free",
         "price": 0,
-        "features": ["1 event creation per month", "2 event joins per month", "Basic chat"]
+        "monthly_limit": 1,
+        "features": ["1 création ou participation par mois", "Chat de groupe basique", "Accès à la carte"]
     },
-    "discovery": {
-        "tier": "discovery",
+    "standard": {
+        "tier": "standard",
         "price": 4.99,
-        "features": ["2 event creations per month", "2 event joins per month", "Full chat features", "Priority support"]
-    },
-    "explorer": {
-        "tier": "explorer",
-        "price": 9.99,
-        "features": ["Unlimited event creations", "Unlimited event joins", "Advanced filters", "Full chat features", "Priority support"]
+        "monthly_limit": 5,
+        "features": ["5 créations ou participations par mois", "Chat complet avec médias", "Filtres avancés", "Support prioritaire"]
     },
     "ambassador": {
         "tier": "ambassador",
-        "price": 14.99,
-        "features": ["All Explorer features", "Access to exclusive events", "Profile badge", "Early access to new features", "VIP support"]
+        "price": 10.99,
+        "monthly_limit": -1,  # -1 = unlimited
+        "features": ["Créations et participations illimitées", "Badge Ambassadeur sur le profil", "Accès anticipé aux nouveautés", "Support VIP", "Événements exclusifs"]
     }
 }
 
