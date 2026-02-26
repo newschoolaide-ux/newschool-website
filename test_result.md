@@ -110,15 +110,18 @@ user_problem_statement: |
 backend:
   - task: "Event creation with gender and age filters"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added gender_filter, age_range_min, age_range_max to EventCreate and EventResponse models"
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE TESTING COMPLETED: All event creation scenarios with gender and age filters working correctly. Tested: 1) Women filter with age range 25-35, 2) All genders with no age limits, 3) Men filter with age range 18-30, 4) Women filter with min age only (30+), 5) All genders with max age only (≤25). All filter fields correctly saved to database and retrieved in API responses. Both POST /api/events creation and GET /api/events retrieval working perfectly. EventCreate and EventResponse models properly include gender_filter, age_range_min, age_range_max fields."
 
   - task: "Admin Dashboard APIs"
     implemented: true
