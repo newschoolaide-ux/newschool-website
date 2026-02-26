@@ -451,14 +451,17 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 @api_router.post("/events", response_model=EventResponse)
 async def create_event(event_data: EventCreate, current_user: dict = Depends(get_current_user)):
     """Create a new event (New School)"""
-    # Check subscription limits
+    # Check subscription limits (creation + join count together)
     tier = current_user.get("subscription_tier", "free")
     events_created = current_user.get("events_created_this_month", 0)
+    events_joined = current_user.get("events_joined_this_month", 0)
+    total_events = events_created + events_joined
     
-    if tier == "free" and events_created >= 1:
-        raise HTTPException(status_code=403, detail="Free tier limit reached. Upgrade to create more events.")
-    elif tier == "discovery" and events_created >= 2:
-        raise HTTPException(status_code=403, detail="Discovery tier limit reached. Upgrade to Explorer for unlimited events.")
+    tier_info = SUBSCRIPTION_TIERS.get(tier, SUBSCRIPTION_TIERS["free"])
+    monthly_limit = tier_info.get("monthly_limit", 1)
+    
+    if monthly_limit != -1 and total_events >= monthly_limit:
+        raise HTTPException(status_code=403, detail=f"Limite mensuelle atteinte ({monthly_limit}). Passez à un abonnement supérieur pour continuer.")
     
     event_id = f"event_{uuid.uuid4().hex[:12]}"
     
