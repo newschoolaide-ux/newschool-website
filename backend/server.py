@@ -43,6 +43,80 @@ security = HTTPBearer(auto_error=False)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# ======================= PUSH NOTIFICATIONS =======================
+
+async def send_push_notification(push_token: str, title: str, body: str, data: dict = None):
+    """Send push notification via Expo Push Service"""
+    if not push_token or not push_token.startswith('ExponentPushToken'):
+        return False
+    
+    message = {
+        "to": push_token,
+        "sound": "default",
+        "title": title,
+        "body": body,
+        "data": data or {}
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://exp.host/--/api/v2/push/send",
+                json=message,
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                }
+            )
+            logger.info(f"Push notification sent: {response.status_code}")
+            return response.status_code == 200
+    except Exception as e:
+        logger.error(f"Failed to send push notification: {e}")
+        return False
+
+async def notify_event_creator(event_id: str, joiner_name: str):
+    """Notify event creator when someone joins"""
+    event = await db.events.find_one({"event_id": event_id})
+    if not event:
+        return
+    
+    creator = await db.users.find_one({"user_id": event["creator_id"]})
+    if not creator or not creator.get("push_token"):
+        return
+    
+    await send_push_notification(
+        creator["push_token"],
+        "Nouveau participant ! 🎉",
+        f"{joiner_name} a rejoint votre New School \"{event['name']}\"",
+        {"type": "join", "event_id": event_id}
+    )
+
+async def notify_chat_participants(event_id: str, sender_id: str, sender_name: str, message_preview: str):
+    """Notify all participants except sender when a message is sent"""
+    event = await db.events.find_one({"event_id": event_id})
+    if not event:
+        return
+    
+    for participant in event.get("participants", []):
+        if participant["user_id"] == sender_id:
+            continue
+        
+        user = await db.users.find_one({"user_id": participant["user_id"]})
+        if not user or not user.get("push_token"):
+            continue
+        
+        # Check if user has blocked the sender
+        if sender_id in user.get("blocked_users", []):
+            continue
+        
+        preview = message_preview[:50] + "..." if len(message_preview) > 50 else message_preview
+        await send_push_notification(
+            user["push_token"],
+            f"{event['name']}",
+            f"{sender_name}: {preview}",
+            {"type": "message", "event_id": event_id}
+        )
+
 # ======================= MODELS =======================
 
 class UserCreate(BaseModel):
