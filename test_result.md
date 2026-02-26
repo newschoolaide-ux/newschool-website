@@ -101,3 +101,75 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Application mobile "New School" - plateforme sociale pour événements spontanés.
+  Fonctionnalités: authentification, création/découverte d'événements, carte, chat, profils, abonnements.
+  Nouvelle fonctionnalité: filtres genre et tranches d'âge lors de la création d'événements.
+
+backend:
+  - task: "Event creation with gender and age filters"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added gender_filter, age_range_min, age_range_max to EventCreate and EventResponse models"
+
+  - task: "Admin Dashboard APIs"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "APIs tested via curl - /api/admin/stats, /api/admin/users, /api/admin/reports working"
+
+frontend:
+  - task: "Event creation form with gender and age filters"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/create-event.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added UI for gender selection (all/men/women) and age range selection"
+
+  - task: "Admin Dashboard page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/admin.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Frontend page created, needs user testing"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Event creation with gender and age filters"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Added gender filter and age range fields to event creation. Backend models updated, frontend UI added. Please test event creation API with new fields."
