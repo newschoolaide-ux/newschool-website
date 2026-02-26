@@ -317,10 +317,14 @@ async def login(user_data: UserLogin, response: Response):
     """Login with email/password"""
     user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Identifiants incorrects")
     
     if not user.get("password") or not verify_password(user_data.password, user["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Identifiants incorrects")
+    
+    # Check if user is banned
+    if user.get("is_banned"):
+        raise HTTPException(status_code=403, detail="Votre compte a été suspendu. Contactez le support pour plus d'informations.")
     
     token = create_access_token({"user_id": user["user_id"]})
     
