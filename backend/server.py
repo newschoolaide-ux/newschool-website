@@ -1006,6 +1006,156 @@ async def get_nationalities():
 async def get_themes():
     return THEMES
 
+# ======================= ADMIN ENDPOINTS =======================
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(current_user: dict = Depends(get_current_user)):
+    """Get admin dashboard statistics"""
+    total_users = await db.users.count_documents({})
+    total_events = await db.events.count_documents({})
+    active_events = await db.events.count_documents({"status": "active"})
+    total_messages = await db.messages.count_documents({})
+    
+    # Subscription counts
+    free_count = await db.users.count_documents({"subscription_tier": {"$in": ["free", None]}})
+    standard_count = await db.users.count_documents({"subscription_tier": "standard"})
+    ambassador_count = await db.users.count_documents({"subscription_tier": "ambassador"})
+    
+    # Calculate monthly revenue (mock - based on current subscribers)
+    monthly_revenue = (standard_count * 4.99) + (ambassador_count * 10.99)
+    
+    # Pending reports
+    reports_pending = await db.reports.count_documents({"status": "pending"})
+    
+    return {
+        "total_users": total_users,
+        "total_events": total_events,
+        "active_events": active_events,
+        "total_messages": total_messages,
+        "subscriptions": {
+            "free": free_count,
+            "standard": standard_count,
+            "ambassador": ambassador_count
+        },
+        "monthly_revenue": monthly_revenue,
+        "reports_pending": reports_pending
+    }
+
+@api_router.get("/admin/users")
+async def get_admin_users(current_user: dict = Depends(get_current_user)):
+    """Get all users for admin"""
+    users = await db.users.find({}, {"_id": 0, "password": 0}).sort("created_at", -1).to_list(1000)
+    
+    # Add report count for each user
+    for user in users:
+        report_count = await db.reports.count_documents({
+            "reported_id": user["user_id"],
+            "report_type": "user"
+        })
+        user["report_count"] = report_count
+    
+    return users
+
+@api_router.get("/admin/reports")
+async def get_admin_reports(current_user: dict = Depends(get_current_user)):
+    """Get all pending reports for admin"""
+    reports = await db.reports.find({"status": "pending"}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Add reported user info
+    for report in reports:
+        if report.get("report_type") == "user":
+            reported_user = await db.users.find_one(
+                {"user_id": report["reported_id"]},
+                {"_id": 0, "user_id": 1, "first_name": 1, "email": 1, "photo": 1}
+            )
+            report["reported_user"] = reported_user
+    
+    return reports
+
+@api_router.post("/admin/users/{user_id}/ban")
+async def ban_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Ban a user"""
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_banned": True, "banned_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Mark all reports for this user as resolved
+    await db.reports.update_many(
+        {"reported_id": user_id, "status": "pending"},
+        {"$set": {"status": "resolved_ban"}}
+    )
+    
+    return {"message": "Utilisateur banni"}
+
+@api_router.post("/admin/users/{user_id}/unban")
+async def unban_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Unban a user"""
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_banned": False}, "$unset": {"banned_at": ""}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    return {"message": "Utilisateur débanni"}
+
+@api_router.post("/admin/reports/{report_id}/resolve")
+async def resolve_report(report_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    """Resolve a report (dismiss or ban)"""
+    body = await request.json()
+    action = body.get("action")  # "dismiss" or "ban"
+    
+    report = await db.reports.find_one({"report_id": report_id})
+    if not report:
+        raise HTTPException(status_code=404, detail="Signalement non trouvé")
+    
+    if action == "ban":
+        # Ban the reported user
+        await db.users.update_one(
+            {"user_id": report["reported_id"]},
+            {"$set": {"is_banned": True, "banned_at": datetime.now(timezone.utc)}}
+        )
+        # Mark report as resolved with ban
+        await db.reports.update_one(
+            {"report_id": report_id},
+            {"$set": {"status": "resolved_ban"}}
+        )
+    else:
+        # Just dismiss the report
+        await db.reports.update_one(
+            {"report_id": report_id},
+            {"$set": {"status": "dismissed"}}
+        )
+    
+    return {"message": "Signalement traité"}
+
+# Auto-ban check function (called when a new report is created)
+async def check_auto_ban(user_id: str):
+    """Check if user should be auto-banned (3+ reports)"""
+    report_count = await db.reports.count_documents({
+        "reported_id": user_id,
+        "report_type": "user",
+        "status": "pending"
+    })
+    
+    if report_count >= 3:
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {"is_banned": True, "banned_at": datetime.now(timezone.utc), "auto_banned": True}}
+        )
+        # Mark all reports as resolved
+        await db.reports.update_many(
+            {"reported_id": user_id, "status": "pending"},
+            {"$set": {"status": "auto_banned"}}
+        )
+        return True
+    return False
+
 # Include router
 app.include_router(api_router)
 
