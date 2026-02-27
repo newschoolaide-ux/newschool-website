@@ -920,19 +920,22 @@ SUBSCRIPTION_TIERS = {
     "free": {
         "tier": "free",
         "price": 0,
-        "monthly_limit": 1,
-        "features": ["1 création ou participation par mois", "Chat de groupe basique", "Accès à la carte"]
+        "creation_limit": 1,
+        "join_limit": 3,
+        "features": ["1 création de New School", "3 participations par mois", "Chat de groupe basique", "Accès à la carte"]
     },
     "standard": {
         "tier": "standard",
-        "price": 4.99,
-        "monthly_limit": 5,
-        "features": ["5 créations ou participations par mois", "Chat complet avec médias", "Filtres avancés", "Support prioritaire"]
+        "price": 7.99,
+        "creation_limit": 4,
+        "join_limit": 4,
+        "features": ["4 créations ou participations par mois", "Chat complet avec médias", "Filtres avancés", "Support prioritaire"]
     },
     "ambassador": {
         "tier": "ambassador",
         "price": 10.99,
-        "monthly_limit": -1,  # -1 = unlimited
+        "creation_limit": -1,  # -1 = unlimited
+        "join_limit": -1,
         "features": ["Créations et participations illimitées", "Badge Ambassadeur sur le profil", "Accès anticipé aux nouveautés", "Support VIP", "Événements exclusifs"]
     }
 }
