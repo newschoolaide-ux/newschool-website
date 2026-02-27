@@ -238,7 +238,11 @@ export default function EventDetailScreen() {
             </View>
             <View style={styles.participantsList}>
               {currentEvent.participants.map((participant) => (
-                <View key={participant.user_id} style={styles.participantItem}>
+                <TouchableOpacity 
+                  key={participant.user_id} 
+                  style={styles.participantItem}
+                  onPress={() => router.push(`/user/${participant.user_id}`)}
+                >
                   {participant.photo ? (
                     <Image source={{ uri: participant.photo }} style={styles.participantAvatar} />
                   ) : (
@@ -252,7 +256,7 @@ export default function EventDetailScreen() {
                       <Ionicons name="star" size={12} color="#D946EF" />
                     </View>
                   )}
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
