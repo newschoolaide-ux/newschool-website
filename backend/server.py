@@ -139,6 +139,8 @@ class UserProfile(BaseModel):
     bio: Optional[str] = None
     languages: List[str] = []
     phone: Optional[str] = None
+    gender: Optional[str] = None
+    birth_year: Optional[int] = None
     subscription_tier: str = "free"
     events_created_this_month: int = 0
     events_joined_this_month: int = 0
@@ -151,6 +153,8 @@ class UserProfileUpdate(BaseModel):
     bio: Optional[str] = None
     languages: Optional[List[str]] = None
     phone: Optional[str] = None
+    gender: Optional[str] = None
+    birth_year: Optional[int] = None
 
 class EventCreate(BaseModel):
     name: str
