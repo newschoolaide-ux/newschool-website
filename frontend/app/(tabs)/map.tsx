@@ -182,7 +182,11 @@ export default function MapScreen() {
             }}
             onPress={() => setSelectedEvent(event)}
           >
-            <View style={[styles.marker, selectedEvent?.event_id === event.event_id && styles.markerSelected]}>
+            <View style={[
+              styles.marker, 
+              { backgroundColor: getThemeColor(event.theme) },
+              selectedEvent?.event_id === event.event_id && styles.markerSelected
+            ]}>
               <Ionicons name="calendar" size={16} color="#FFF" />
             </View>
           </Marker>
