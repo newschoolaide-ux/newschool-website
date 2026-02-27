@@ -329,9 +329,14 @@ const styles = StyleSheet.create({
     height: 150,
   },
   eventImagePlaceholder: {
-    backgroundColor: '#222',
+    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  placeholderLogo: {
+    width: 60,
+    height: 60,
+    opacity: 0.5,
   },
   eventContent: {
     padding: 16,
