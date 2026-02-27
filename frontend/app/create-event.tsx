@@ -132,8 +132,6 @@ export default function CreateEventScreen() {
       return;
     }
 
-    const selectedAge = AGE_RANGES.find(a => a.id === selectedAgeRange);
-    
     const eventData = {
       name: name.trim(),
       description: description.trim(),
@@ -146,8 +144,7 @@ export default function CreateEventScreen() {
       theme: selectedTheme,
       photo,
       gender_filter: selectedGender,
-      age_range_min: selectedAge?.min || null,
-      age_range_max: selectedAge?.max || null,
+      age_ranges: selectedAgeRanges,
     };
 
     try {
