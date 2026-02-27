@@ -767,10 +767,15 @@ async def leave_event(event_id: str, current_user: dict = Depends(get_current_us
     """Leave an event"""
     event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
     if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+        raise HTTPException(status_code=404, detail="Événement non trouvé")
     
     if event["creator_id"] == current_user["user_id"]:
-        raise HTTPException(status_code=400, detail="Creator cannot leave the event. Delete it instead.")
+        raise HTTPException(status_code=400, detail="Le créateur ne peut pas quitter l'événement. Supprimez-le à la place.")
+    
+    # Check if user is a participant
+    participant_ids = [p["user_id"] for p in event.get("participants", [])]
+    if current_user["user_id"] not in participant_ids:
+        raise HTTPException(status_code=400, detail="Vous n'êtes pas participant de cet événement")
     
     await db.events.update_one(
         {"event_id": event_id},
@@ -781,7 +786,17 @@ async def leave_event(event_id: str, current_user: dict = Depends(get_current_us
         }
     )
     
-    return {"message": "Successfully left the event"}
+    # Refund join credit if event is not full (free and standard tiers only)
+    tier = current_user.get("subscription_tier", "free")
+    if tier in ["free", "standard"]:
+        current_joined = current_user.get("events_joined_this_month", 0)
+        if current_joined > 0:
+            await db.users.update_one(
+                {"user_id": current_user["user_id"]},
+                {"$inc": {"events_joined_this_month": -1}}
+            )
+    
+    return {"message": "Vous avez quitté la New School"}
 
 @api_router.delete("/events/{event_id}")
 async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
