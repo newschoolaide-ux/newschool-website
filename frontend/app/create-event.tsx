@@ -568,4 +568,10 @@ const styles = StyleSheet.create({
   ageChipTextActive: {
     color: '#FFF',
   },
+  hint: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
 });
