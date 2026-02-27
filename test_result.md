@@ -108,7 +108,31 @@ user_problem_statement: |
   Nouvelle fonctionnalité: filtres genre et tranches d'âge lors de la création d'événements.
 
 backend:
-  - task: "Event creation with gender and age filters"
+  - task: "User registration with gender field"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: User registration correctly accepts and stores gender field. Tested registration with gender='female', verified field is saved in database and returned in profile API. POST /api/auth/register working correctly with gender parameter."
+
+  - task: "Subscription tiers with correct pricing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: All three subscription tiers correctly implemented. Free (0€, 1 creation, 3 joins), Standard (7.99€, 4 creation/joins), Ambassador (10.99€, unlimited). GET /api/subscriptions/tiers returns correct pricing and limits as specified."
+
+  - task: "Event creation with age_ranges array"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -122,6 +146,33 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED: All event creation scenarios with gender and age filters working correctly. Tested: 1) Women filter with age range 25-35, 2) All genders with no age limits, 3) Men filter with age range 18-30, 4) Women filter with min age only (30+), 5) All genders with max age only (≤25). All filter fields correctly saved to database and retrieved in API responses. Both POST /api/events creation and GET /api/events retrieval working perfectly. EventCreate and EventResponse models properly include gender_filter, age_range_min, age_range_max fields."
+      - working: true
+        agent: "testing"
+        comment: "✅ UPDATED VERIFICATION: Event creation now supports age_ranges as array format. Successfully tested POST /api/events with age_ranges=['18-25', '25-35'] and gender_filter='women'. Both fields correctly saved to database and returned in API responses. Backend properly handles array format for age ranges as required."
+
+  - task: "Gender filter enforcement"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: Gender filter enforcement working correctly. Tested male user attempting to join women-only event, correctly blocked with 403 status and French error message 'Cet événement est réservé aux femmes'. POST /api/events/{id}/join properly validates gender restrictions."
+
+  - task: "Leave event with credit refund"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ VERIFIED: Leave event functionality working correctly with French messages. POST /api/events/{id}/leave returns 'Vous avez quitté la New School' message. Credit refund working - events_joined_this_month decremented from 1 to 0 after leaving. User correctly removed from event participants list."
 
   - task: "Admin Dashboard APIs"
     implemented: true
