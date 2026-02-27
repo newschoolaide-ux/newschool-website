@@ -117,6 +117,37 @@ export default function RegisterScreen() {
             />
           </View>
 
+          <Text style={styles.sectionLabel}>Je suis *</Text>
+          <View style={styles.genderContainer}>
+            <TouchableOpacity
+              style={[styles.genderOption, gender === 'female' && styles.genderOptionActive]}
+              onPress={() => setGender('female')}
+            >
+              <Ionicons name="female" size={24} color={gender === 'female' ? '#FFF' : '#888'} />
+              <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive]}>Femme</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.genderOption, gender === 'male' && styles.genderOptionActive]}
+              onPress={() => setGender('male')}
+            >
+              <Ionicons name="male" size={24} color={gender === 'male' ? '#FFF' : '#888'} />
+              <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive]}>Homme</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="calendar-outline" size={20} color="#888" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Année de naissance (optionnel)"
+              placeholderTextColor="#666"
+              value={birthYear}
+              onChangeText={setBirthYear}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#888" style={styles.inputIcon} />
             <TextInput
