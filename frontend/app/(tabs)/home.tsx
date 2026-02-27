@@ -93,7 +93,11 @@ export default function HomeScreen() {
         <Image source={{ uri: event.photo }} style={styles.eventImage} />
       ) : (
         <View style={[styles.eventImage, styles.eventImagePlaceholder]}>
-          <Ionicons name="calendar" size={40} color="#444" />
+          <Image 
+            source={require('../../assets/images/logo-newschool.png')} 
+            style={styles.placeholderLogo}
+            resizeMode="contain"
+          />
         </View>
       )}
       <View style={styles.eventContent}>
