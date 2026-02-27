@@ -295,4 +295,37 @@ const styles = StyleSheet.create({
     marginTop: 24,
     lineHeight: 18,
   },
+  sectionLabel: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  genderOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  genderOptionActive: {
+    backgroundColor: '#D946EF',
+  },
+  genderText: {
+    color: '#888',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  genderTextActive: {
+    color: '#FFF',
+  },
 });
