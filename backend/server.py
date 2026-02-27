@@ -193,8 +193,7 @@ class EventResponse(BaseModel):
     start_time: Optional[datetime]
     is_full: bool
     gender_filter: Optional[str] = None
-    age_range_min: Optional[int] = None
-    age_range_max: Optional[int] = None
+    age_ranges: List[str] = []
 
 class MessageCreate(BaseModel):
     content: str
