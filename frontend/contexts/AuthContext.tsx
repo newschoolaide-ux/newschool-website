@@ -11,6 +11,8 @@ export interface User {
   bio?: string;
   languages: string[];
   phone?: string;
+  gender?: string;
+  birth_year?: number;
   subscription_tier: string;
   events_created_this_month: number;
   events_joined_this_month: number;
@@ -24,7 +26,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, firstName: string, phone?: string) => Promise<void>;
+  register: (email: string, password: string, firstName: string, phone?: string, gender?: string, birthYear?: number) => Promise<void>;
   loginWithGoogle: () => void;
   handleOAuthCallback: (sessionId: string) => Promise<void>;
   logout: () => Promise<void>;
