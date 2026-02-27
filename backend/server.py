@@ -300,6 +300,8 @@ async def register(user_data: UserCreate):
         "password": hashed_password,
         "first_name": user_data.first_name,
         "phone": user_data.phone,
+        "gender": user_data.gender,
+        "birth_year": user_data.birth_year,
         "photo": None,
         "bio": None,
         "languages": [],
