@@ -294,26 +294,35 @@ export default function CreateEventScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tranche d'âge</Text>
+          <Text style={styles.label}>Tranches d'âge (plusieurs choix possibles)</Text>
           <View style={styles.ageContainer}>
             {AGE_RANGES.map((range) => (
               <TouchableOpacity
                 key={range.id}
                 style={[
                   styles.ageChip,
-                  selectedAgeRange === range.id && styles.ageChipActive
+                  selectedAgeRanges.includes(range.id) && styles.ageChipActive
                 ]}
-                onPress={() => setSelectedAgeRange(range.id)}
+                onPress={() => {
+                  if (selectedAgeRanges.includes(range.id)) {
+                    setSelectedAgeRanges(selectedAgeRanges.filter(r => r !== range.id));
+                  } else {
+                    setSelectedAgeRanges([...selectedAgeRanges, range.id]);
+                  }
+                }}
               >
                 <Text style={[
                   styles.ageChipText,
-                  selectedAgeRange === range.id && styles.ageChipTextActive
+                  selectedAgeRanges.includes(range.id) && styles.ageChipTextActive
                 ]}>
                   {range.label}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
+          {selectedAgeRanges.length === 0 && (
+            <Text style={styles.hint}>Laissez vide pour tous âges</Text>
+          )}
         </View>
 
         <View style={styles.inputGroup}>
