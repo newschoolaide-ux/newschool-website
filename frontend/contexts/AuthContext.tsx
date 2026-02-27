@@ -103,13 +103,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await refreshUser();
   };
 
-  const register = async (email: string, password: string, firstName: string, phone?: string) => {
+  const register = async (email: string, password: string, firstName: string, phone?: string, gender?: string, birthYear?: number) => {
     const response = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password, first_name: firstName, phone }),
+      body: JSON.stringify({ 
+        email, 
+        password, 
+        first_name: firstName, 
+        phone,
+        gender,
+        birth_year: birthYear
+      }),
     });
 
     if (!response.ok) {
