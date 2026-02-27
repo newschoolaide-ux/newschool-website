@@ -260,55 +260,38 @@ def test_leave_event_and_credit_refund(event_id, female_user_data):
     print("\n🧪 Test 5: Leave Event and Credit Refund")
     print("=" * 45)
     
-    headers = {"Authorization": f"Bearer {female_user_data['token']}"}
-    
     try:
-        # First, verify user is in the event (they should be as creator)
-        response = requests.get(f"{BACKEND_URL}/events/{event_id}", headers=headers)
-        if response.status_code != 200:
-            print(f"❌ Cannot retrieve event: {response.status_code}")
+        # Create another female user to join the event (creator cannot leave)
+        timestamp = datetime.now().strftime("%H%M%S")
+        
+        join_register_data = {
+            "email": f"test-joiner-{timestamp}@newschool.com",
+            "password": "test123",
+            "first_name": "Sophie",
+            "gender": "female"
+        }
+        
+        response = requests.post(f"{BACKEND_URL}/auth/register", json=join_register_data)
+        if response.status_code not in [200, 201]:
+            print(f"❌ Could not create joiner user: {response.status_code}")
             return False
             
-        event = response.json()
-        participants = event.get("participants", [])
-        user_in_event = any(p.get("user_id") == female_user_data["user_id"] for p in participants)
+        joiner_auth = response.json()
+        joiner_token = joiner_auth.get("token")
+        joiner_headers = {"Authorization": f"Bearer {joiner_token}"}
+        test_user_id = joiner_auth.get("user_id")
         
-        if not user_in_event:
-            print("⚠️ User not in event as participant. Creating another user to join first...")
+        print(f"✅ Created test user: {joiner_auth.get('first_name')} ({test_user_id})")
+        
+        # Join the event
+        print(f"Joining event: {event_id}")
+        response = requests.post(f"{BACKEND_URL}/events/{event_id}/join", headers=joiner_headers)
+        if response.status_code != 200:
+            print(f"❌ Could not join event: {response.status_code} - {response.text}")
+            return False
             
-            # Create another female user to join the event
-            timestamp = datetime.now().strftime("%H%M%S")
-            
-            join_register_data = {
-                "email": f"test-joiner-{timestamp}@newschool.com",
-                "password": "test123",
-                "first_name": "Sophie",
-                "gender": "female"
-            }
-            
-            response = requests.post(f"{BACKEND_URL}/auth/register", json=join_register_data)
-            if response.status_code not in [200, 201]:
-                print(f"❌ Could not create joiner user: {response.status_code}")
-                return False
-                
-            joiner_auth = response.json()
-            joiner_token = joiner_auth.get("token")
-            joiner_headers = {"Authorization": f"Bearer {joiner_token}"}
-            
-            # Join the event
-            response = requests.post(f"{BACKEND_URL}/events/{event_id}/join", headers=joiner_headers)
-            if response.status_code != 200:
-                print(f"❌ Joiner could not join event: {response.status_code} - {response.text}")
-                return False
-                
-            print(f"✅ Created and joined event with user: {joiner_auth.get('first_name')}")
-            
-            # Use joiner for leave test
-            headers = joiner_headers
-            test_user_id = joiner_auth.get("user_id")
-        else:
-            test_user_id = female_user_data["user_id"]
-            print("✅ User is already in event as participant")
+        print(f"✅ Successfully joined event")
+        headers = joiner_headers
         
         # Get user's joined count before leaving
         response = requests.get(f"{BACKEND_URL}/subscriptions/current", headers=headers)
