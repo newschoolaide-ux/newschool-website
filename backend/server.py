@@ -564,17 +564,23 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 @api_router.post("/events", response_model=EventResponse)
 async def create_event(event_data: EventCreate, current_user: dict = Depends(get_current_user)):
     """Create a new event (New School)"""
-    # Check subscription limits (creation + join count together)
+    # Check subscription limits for creation
     tier = current_user.get("subscription_tier", "free")
     events_created = current_user.get("events_created_this_month", 0)
-    events_joined = current_user.get("events_joined_this_month", 0)
-    total_events = events_created + events_joined
     
     tier_info = SUBSCRIPTION_TIERS.get(tier, SUBSCRIPTION_TIERS["free"])
-    monthly_limit = tier_info.get("monthly_limit", 1)
+    creation_limit = tier_info.get("creation_limit", 1)
     
-    if monthly_limit != -1 and total_events >= monthly_limit:
-        raise HTTPException(status_code=403, detail=f"Limite mensuelle atteinte ({monthly_limit}). Passez à un abonnement supérieur pour continuer.")
+    if creation_limit != -1 and events_created >= creation_limit:
+        raise HTTPException(status_code=403, detail=f"Limite de création atteinte ({creation_limit}). Passez à un abonnement supérieur pour continuer.")
+    
+    # Check gender filter eligibility
+    user_gender = current_user.get("gender")
+    if event_data.gender_filter and event_data.gender_filter != "all":
+        if event_data.gender_filter == "women" and user_gender != "female":
+            raise HTTPException(status_code=400, detail="Seules les femmes peuvent créer un événement réservé aux femmes")
+        if event_data.gender_filter == "men" and user_gender != "male":
+            raise HTTPException(status_code=400, detail="Seuls les hommes peuvent créer un événement réservé aux hommes")
     
     event_id = f"event_{uuid.uuid4().hex[:12]}"
     
@@ -598,15 +604,15 @@ async def create_event(event_data: EventCreate, current_user: dict = Depends(get
             "user_id": current_user["user_id"],
             "first_name": current_user["first_name"],
             "photo": current_user.get("photo"),
+            "gender": current_user.get("gender"),
             "joined_at": datetime.now(timezone.utc).isoformat()
         }],
         "status": "active",
         "created_at": datetime.now(timezone.utc),
         "start_time": event_data.start_time or datetime.now(timezone.utc),
         "is_full": False,
-        "gender_filter": event_data.gender_filter,
-        "age_range_min": event_data.age_range_min,
-        "age_range_max": event_data.age_range_max
+        "gender_filter": event_data.gender_filter or "all",
+        "age_ranges": event_data.age_ranges or []
     }
     
     await db.events.insert_one(event_doc)
