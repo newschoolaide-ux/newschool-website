@@ -169,8 +169,7 @@ class EventCreate(BaseModel):
     photo: Optional[str] = None
     start_time: Optional[datetime] = None
     gender_filter: Optional[str] = None  # "all", "men", "women"
-    age_range_min: Optional[int] = None
-    age_range_max: Optional[int] = None
+    age_ranges: List[str] = []  # ["18-25", "25-35", etc.]
 
 class EventResponse(BaseModel):
     event_id: str
