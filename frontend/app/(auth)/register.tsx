@@ -23,6 +23,8 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [gender, setGender] = useState<string | null>(null);
+  const [birthYear, setBirthYear] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
@@ -31,6 +33,11 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!firstName || !email || !password || !confirmPassword) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    if (!gender) {
+      Alert.alert('Erreur', 'Veuillez sélectionner votre genre');
       return;
     }
 
@@ -46,7 +53,7 @@ export default function RegisterScreen() {
 
     setIsLoading(true);
     try {
-      await register(email, password, firstName, phone || undefined);
+      await register(email, password, firstName, phone || undefined, gender, birthYear ? parseInt(birthYear) : undefined);
       router.replace('/(tabs)/home');
     } catch (error: any) {
       Alert.alert('Erreur', error.message);
