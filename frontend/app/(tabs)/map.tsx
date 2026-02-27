@@ -18,6 +18,25 @@ import { useEventStore, Event } from '../../stores/eventStore';
 
 const { width, height } = Dimensions.get('window');
 
+// Colors by theme for map markers
+const THEME_COLORS: { [key: string]: string } = {
+  'Sport': '#EF4444',           // Red
+  'Musique': '#3B82F6',         // Blue
+  'Gastronomie': '#F59E0B',     // Orange
+  'Art & Culture': '#8B5CF6',   // Purple
+  'Plein air': '#10B981',       // Green
+  'Vie nocturne': '#EC4899',    // Pink
+  'Business': '#6B7280',        // Gray
+  'Échange linguistique': '#06B6D4', // Cyan
+  'Voyage': '#F97316',          // Dark Orange
+  'Jeux': '#84CC16',            // Lime
+  'Autre': '#D946EF',           // Default Pink
+};
+
+const getThemeColor = (theme?: string) => {
+  return theme ? (THEME_COLORS[theme] || THEME_COLORS['Autre']) : THEME_COLORS['Autre'];
+};
+
 // Only import MapView on native platforms
 let MapView: any = null;
 let Marker: any = null;
