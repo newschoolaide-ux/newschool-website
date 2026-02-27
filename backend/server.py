@@ -124,6 +124,8 @@ class UserCreate(BaseModel):
     password: str
     first_name: str
     phone: Optional[str] = None
+    gender: Optional[str] = None  # "male", "female", "other"
+    birth_year: Optional[int] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
