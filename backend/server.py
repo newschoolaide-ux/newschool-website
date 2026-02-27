@@ -713,22 +713,29 @@ async def join_event(event_id: str, current_user: dict = Depends(get_current_use
     if current_user["user_id"] in participant_ids:
         raise HTTPException(status_code=400, detail="Vous avez déjà rejoint cet événement")
     
-    # Check subscription limits (creation + join count together)
+    # Check gender filter
+    gender_filter = event.get("gender_filter", "all")
+    user_gender = current_user.get("gender")
+    if gender_filter == "women" and user_gender != "female":
+        raise HTTPException(status_code=403, detail="Cet événement est réservé aux femmes")
+    if gender_filter == "men" and user_gender != "male":
+        raise HTTPException(status_code=403, detail="Cet événement est réservé aux hommes")
+    
+    # Check subscription limits for joining
     tier = current_user.get("subscription_tier", "free")
-    events_created = current_user.get("events_created_this_month", 0)
     events_joined = current_user.get("events_joined_this_month", 0)
-    total_events = events_created + events_joined
     
     tier_info = SUBSCRIPTION_TIERS.get(tier, SUBSCRIPTION_TIERS["free"])
-    monthly_limit = tier_info.get("monthly_limit", 1)
+    join_limit = tier_info.get("join_limit", 3)
     
-    if monthly_limit != -1 and total_events >= monthly_limit:
-        raise HTTPException(status_code=403, detail=f"Limite mensuelle atteinte ({monthly_limit}). Passez à un abonnement supérieur pour continuer.")
+    if join_limit != -1 and events_joined >= join_limit:
+        raise HTTPException(status_code=403, detail=f"Limite de participations atteinte ({join_limit}). Passez à un abonnement supérieur pour continuer.")
     
     new_participant = {
         "user_id": current_user["user_id"],
         "first_name": current_user["first_name"],
         "photo": current_user.get("photo"),
+        "gender": current_user.get("gender"),
         "joined_at": datetime.now(timezone.utc).isoformat()
     }
     
