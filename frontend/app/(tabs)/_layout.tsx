@@ -5,16 +5,17 @@ import { StyleSheet, View, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Custom icon component for the "Explorer" tab using the logo
-const LogoIcon = ({ color, size }: { color: string; size: number }) => (
-  <Image
-    source={require('../../assets/images/logo-newschool.png')}
-    style={{
-      width: size + 4,
-      height: size + 4,
-      tintColor: color,
-    }}
-    resizeMode="contain"
-  />
+const LogoIcon = ({ color, size, focused }: { color: string; size: number; focused?: boolean }) => (
+  <View style={{ opacity: focused ? 1 : 0.5 }}>
+    <Image
+      source={require('../../assets/images/logo-newschool.png')}
+      style={{
+        width: size + 4,
+        height: size + 4,
+      }}
+      resizeMode="contain"
+    />
+  </View>
 );
 
 export default function TabsLayout() {
