@@ -660,4 +660,33 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: 'italic',
   },
+  searchingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  searchingText: {
+    color: '#888',
+    fontSize: 12,
+  },
+  suggestionsContainer: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A2A',
+    gap: 12,
+  },
+  suggestionText: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 14,
+  },
 });
