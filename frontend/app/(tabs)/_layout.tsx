@@ -1,11 +1,31 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Custom icon component for the "Explorer" tab using the logo
+const LogoIcon = ({ color, size }: { color: string; size: number }) => (
+  <Image
+    source={require('../../assets/images/logo-newschool.png')}
+    style={{
+      width: size + 4,
+      height: size + 4,
+      tintColor: color,
+    }}
+    resizeMode="contain"
+  />
+);
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  
+  // Calculate proper bottom padding for tab bar
+  const tabBarPaddingBottom = Platform.OS === 'ios' 
+    ? Math.max(insets.bottom, 8) 
+    : 10;
+  
+  const tabBarHeight = 60 + tabBarPaddingBottom;
 
   return (
     <Tabs
@@ -13,7 +33,10 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarStyle: [
           styles.tabBar,
-          { paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }
+          { 
+            height: tabBarHeight,
+            paddingBottom: tabBarPaddingBottom,
+          }
         ],
         tabBarActiveTintColor: '#D946EF',
         tabBarInactiveTintColor: '#666',
@@ -24,9 +47,7 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: 'Explorer',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <LogoIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -65,11 +86,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A0A0A',
     borderTopColor: '#1A1A1A',
     borderTopWidth: 1,
-    height: 60,
     paddingTop: 8,
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: '500',
+    marginBottom: 2,
   },
 });
