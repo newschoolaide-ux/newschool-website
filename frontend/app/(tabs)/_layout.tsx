@@ -48,7 +48,7 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: 'Explorer',
-          tabBarIcon: ({ color, size }) => <LogoIcon color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => <LogoIcon color={color} size={size} focused={focused} />,
         }}
       />
       <Tabs.Screen
