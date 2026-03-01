@@ -334,9 +334,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   placeholderLogo: {
-    width: 60,
-    height: 60,
-    opacity: 0.5,
+    width: '100%',
+    height: '100%',
+    opacity: 0.7,
   },
   eventContent: {
     padding: 16,
