@@ -54,6 +54,9 @@ export default function CreateEventScreen() {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [selectedGender, setSelectedGender] = useState<string>('all');
   const [selectedAgeRanges, setSelectedAgeRanges] = useState<string[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const searchTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     getCurrentLocation();
