@@ -329,14 +329,14 @@ const styles = StyleSheet.create({
     height: 150,
   },
   eventImagePlaceholder: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   placeholderLogo: {
     width: '100%',
     height: '100%',
-    opacity: 0.7,
   },
   eventContent: {
     padding: 16,
