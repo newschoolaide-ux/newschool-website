@@ -277,10 +277,10 @@ export default function CreateEventScreen() {
           <View style={styles.locationRow}>
             <TextInput
               style={[styles.input, styles.locationInput]}
-              placeholder="Adresse ou nom du lieu"
+              placeholder="Tapez une adresse (ex: Lyon 5e)"
               placeholderTextColor="#666"
               value={locationName}
-              onChangeText={setLocationName}
+              onChangeText={handleLocationChange}
             />
             <TouchableOpacity
               style={styles.locationButton}
@@ -294,9 +294,34 @@ export default function CreateEventScreen() {
               )}
             </TouchableOpacity>
           </View>
+          
+          {isSearchingAddress && (
+            <View style={styles.searchingIndicator}>
+              <ActivityIndicator size="small" color="#D946EF" />
+              <Text style={styles.searchingText}>Recherche...</Text>
+            </View>
+          )}
+          
+          {addressSuggestions.length > 0 && (
+            <View style={styles.suggestionsContainer}>
+              {addressSuggestions.map((suggestion, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.suggestionItem}
+                  onPress={() => selectAddress(suggestion)}
+                >
+                  <Ionicons name="location" size={18} color="#D946EF" />
+                  <Text style={styles.suggestionText} numberOfLines={2}>
+                    {suggestion.displayName}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          
           {latitude && longitude && (
             <Text style={styles.coordinates}>
-              Position détectée
+              <Ionicons name="checkmark-circle" size={14} color="#10B981" /> Position confirmée
             </Text>
           )}
         </View>
