@@ -63,7 +63,8 @@ export default function MapScreen() {
 
   useEffect(() => {
     if (token && location) {
-      fetchNearbyEvents(token, location.latitude, location.longitude, 50);
+      // Fetch events in a larger radius (200km) to see more events
+      fetchNearbyEvents(token, location.latitude, location.longitude, 200);
     }
   }, [token, location]);
 
