@@ -10,7 +10,7 @@ export default function Index() {
   const fadeAnim = useState(new Animated.Value(1))[0];
 
   useEffect(() => {
-    // Show splash for 1.5 seconds
+    // Show splash for 3 seconds
     const timer = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -19,7 +19,7 @@ export default function Index() {
       }).start(() => {
         setShowSplash(false);
       });
-    }, 1500);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, []);
