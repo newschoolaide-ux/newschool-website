@@ -96,7 +96,7 @@ export default function HomeScreen() {
           <Image 
             source={require('../../assets/images/logo-newschool.png')} 
             style={styles.placeholderLogo}
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </View>
       )}
