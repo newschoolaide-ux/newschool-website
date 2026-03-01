@@ -89,6 +89,64 @@ export default function CreateEventScreen() {
     }
   };
 
+  const searchAddress = async (query: string) => {
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    
+    setIsSearchingAddress(true);
+    try {
+      const results = await Location.geocodeAsync(query);
+      if (results.length > 0) {
+        // Get detailed address for each result
+        const suggestions = await Promise.all(
+          results.slice(0, 5).map(async (result) => {
+            const addresses = await Location.reverseGeocodeAsync({
+              latitude: result.latitude,
+              longitude: result.longitude,
+            });
+            return {
+              ...result,
+              address: addresses[0] || null,
+              displayName: addresses[0] 
+                ? [addresses[0].street, addresses[0].district, addresses[0].city, addresses[0].region].filter(Boolean).join(', ')
+                : `${result.latitude.toFixed(4)}, ${result.longitude.toFixed(4)}`,
+            };
+          })
+        );
+        setAddressSuggestions(suggestions);
+      } else {
+        setAddressSuggestions([]);
+      }
+    } catch (error) {
+      console.error('Error searching address:', error);
+      setAddressSuggestions([]);
+    } finally {
+      setIsSearchingAddress(false);
+    }
+  };
+
+  const handleLocationChange = (text: string) => {
+    setLocationName(text);
+    
+    // Debounce the search
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+    
+    searchTimeout.current = setTimeout(() => {
+      searchAddress(text);
+    }, 500);
+  };
+
+  const selectAddress = (suggestion: any) => {
+    setLatitude(suggestion.latitude);
+    setLongitude(suggestion.longitude);
+    setLocationName(suggestion.displayName);
+    setAddressSuggestions([]);
+  };
+
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
