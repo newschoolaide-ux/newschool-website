@@ -62,6 +62,15 @@ export default function MapScreen() {
     getLocation();
   }, []);
 
+  // Refresh events when the map tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (token && location) {
+        fetchNearbyEvents(token, location.latitude, location.longitude, 200);
+      }
+    }, [token, location])
+  );
+
   useEffect(() => {
     if (token && location) {
       // Fetch events in a larger radius (200km) to see more events
