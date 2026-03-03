@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -54,12 +54,27 @@ export default function MapScreen() {
   const { nearbyEvents, isLoading, fetchNearbyEvents } = useEventStore();
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const lastRefresh = useRef<number>(0);
 
   useEffect(() => {
     getLocation();
   }, []);
+
+  // Refresh when navigating back to map tab
+  useEffect(() => {
+    if (pathname === '/map' && token && location) {
+      const now = Date.now();
+      // Only refresh if more than 2 seconds since last refresh (avoid double refresh)
+      if (now - lastRefresh.current > 2000) {
+        lastRefresh.current = now;
+        fetchNearbyEvents(token, location.latitude, location.longitude, 200);
+      }
+    }
+  }, [pathname, token, location]);
 
   useEffect(() => {
     if (token && location) {
@@ -67,6 +82,14 @@ export default function MapScreen() {
       fetchNearbyEvents(token, location.latitude, location.longitude, 200);
     }
   }, [token, location]);
+
+  const refreshEvents = async () => {
+    if (!token || !location) return;
+    setIsRefreshing(true);
+    await fetchNearbyEvents(token, location.latitude, location.longitude, 200);
+    lastRefresh.current = Date.now();
+    setIsRefreshing(false);
+  };
 
   const getLocation = async () => {
     try {
@@ -199,6 +222,17 @@ export default function MapScreen() {
           <Text style={styles.headerTitle}>Carte des événements</Text>
           <Text style={styles.headerSubtitle}>{nearbyEvents.length} événements à proximité</Text>
         </View>
+        <TouchableOpacity 
+          style={styles.refreshButton} 
+          onPress={refreshEvents}
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? (
+            <ActivityIndicator size="small" color="#D946EF" />
+          ) : (
+            <Ionicons name="refresh" size={22} color="#D946EF" />
+          )}
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity
@@ -272,11 +306,23 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 12,
   },
   headerContent: {
+    flex: 1,
     backgroundColor: 'rgba(10, 10, 10, 0.9)',
     borderRadius: 12,
     padding: 16,
+  },
+  refreshButton: {
+    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+    borderRadius: 12,
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,
