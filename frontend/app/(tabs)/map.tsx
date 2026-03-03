@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -61,15 +60,6 @@ export default function MapScreen() {
   useEffect(() => {
     getLocation();
   }, []);
-
-  // Refresh events when the map tab is focused
-  useFocusEffect(
-    useCallback(() => {
-      if (token && location) {
-        fetchNearbyEvents(token, location.latitude, location.longitude, 200);
-      }
-    }, [token, location])
-  );
 
   useEffect(() => {
     if (token && location) {
