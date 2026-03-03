@@ -407,8 +407,8 @@ export default function AdminDashboard() {
           <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dashboard Admin</Text>
-        <TouchableOpacity onPress={() => setIsAuthenticated(false)}>
-          <Ionicons name="log-out-outline" size={24} color="#FFF" />
+        <TouchableOpacity onPress={() => loadData()}>
+          <Ionicons name="refresh" size={24} color="#FFF" />
         </TouchableOpacity>
       </View>
 
