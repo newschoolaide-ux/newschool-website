@@ -72,7 +72,7 @@ export default function HelpScreen() {
   };
 
   const contactEmail = () => {
-    Linking.openURL('mailto:support@newschool.app?subject=Support New School');
+    Linking.openURL('mailto:newschoolaide@gmail.com?subject=Support New School');
   };
 
   return (
@@ -97,7 +97,7 @@ export default function HelpScreen() {
           
           <TouchableOpacity 
             style={styles.quickAction} 
-            onPress={() => Linking.openURL('https://instagram.com/newschool.app')}
+            onPress={() => Linking.openURL('https://instagram.com/newschool_fr')}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: '#E1306C' }]}>
               <Ionicons name="logo-instagram" size={24} color="#FFF" />
@@ -107,12 +107,12 @@ export default function HelpScreen() {
           
           <TouchableOpacity 
             style={styles.quickAction}
-            onPress={() => Linking.openURL('https://twitter.com/newschoolapp')}
+            onPress={() => Linking.openURL('https://tiktok.com/@new.school.app')}
           >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#1DA1F2' }]}>
-              <Ionicons name="logo-twitter" size={24} color="#FFF" />
+            <View style={[styles.quickActionIcon, { backgroundColor: '#000000' }]}>
+              <Ionicons name="musical-notes" size={24} color="#FFF" />
             </View>
-            <Text style={styles.quickActionText}>Twitter</Text>
+            <Text style={styles.quickActionText}>TikTok</Text>
           </TouchableOpacity>
         </View>
 

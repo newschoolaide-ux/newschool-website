@@ -147,7 +147,7 @@ export default function PrivacyScreen() {
 
         <Text style={styles.footerText}>
           Dernière mise à jour : Mars 2025{'\n'}
-          Pour toute question, contactez-nous à privacy@newschool.app
+          Pour toute question, contactez-nous à newschoolaide@gmail.com
         </Text>
       </ScrollView>
     </View>
