@@ -1,5 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Query, Response, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -1248,3 +1250,29 @@ async def startup_db():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+
+# Serve landing page files for download
+@app.get("/download/index.html")
+async def download_index():
+    return FileResponse(
+        ROOT_DIR / "static" / "index.html",
+        media_type="text/html",
+        filename="index.html"
+    )
+
+@app.get("/download/logo.png")
+async def download_logo():
+    return FileResponse(
+        ROOT_DIR / "static" / "logo.png",
+        media_type="image/png",
+        filename="logo.png"
+    )
+
+@app.get("/download/vercel.json")
+async def download_vercel():
+    return FileResponse(
+        ROOT_DIR / "static" / "vercel.json",
+        media_type="application/json",
+        filename="vercel.json"
+    )
