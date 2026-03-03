@@ -18,7 +18,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-const ADMIN_PASSWORD = 'NewSchool2024!'; // Change this to your secure password
 
 interface Stats {
   total_users: number;
@@ -58,34 +57,30 @@ interface Report {
 }
 
 export default function AdminDashboard() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'reports'>('stats');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && token) {
+    // Check if user is admin
+    if (user?.role !== 'admin') {
+      Alert.alert('Accès refusé', 'Vous n\'avez pas les permissions nécessaires.');
+      router.back();
+      return;
+    }
+    if (token) {
       loadData();
     }
-  }, [isAuthenticated, token]);
-
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-    } else {
-      Alert.alert('Erreur', 'Mot de passe incorrect');
-    }
-  };
+  }, [token, user]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -211,31 +206,12 @@ export default function AdminDashboard() {
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Login Screen
-  if (!isAuthenticated) {
+  // Loading Screen
+  if (isLoading && !stats) {
     return (
       <View style={[styles.container, styles.loginContainer, { paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.backButtonLogin} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
-        </TouchableOpacity>
-        
-        <Ionicons name="shield-checkmark" size={80} color="#D946EF" />
-        <Text style={styles.loginTitle}>Administration</Text>
-        <Text style={styles.loginSubtitle}>Accès réservé</Text>
-        
-        <View style={styles.loginForm}>
-          <TextInput
-            style={styles.passwordInput}
-            placeholder="Mot de passe admin"
-            placeholderTextColor="#666"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Accéder</Text>
-          </TouchableOpacity>
-        </View>
+        <ActivityIndicator size="large" color="#D946EF" />
+        <Text style={styles.loadingText}>Chargement du tableau de bord...</Text>
       </View>
     );
   }
@@ -602,6 +578,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  loadingText: {
+    color: '#888',
+    fontSize: 16,
+    marginTop: 16,
   },
   contentContainer: {
     padding: 16,

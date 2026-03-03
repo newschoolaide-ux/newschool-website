@@ -37,6 +37,9 @@ SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "newschool-super-secret-key-change
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
+# Admin email - this account gets automatic admin privileges
+ADMIN_EMAIL = "newschoolaide@gmail.com"
+
 security = HTTPBearer(auto_error=False)
 
 # Configure logging
@@ -142,6 +145,7 @@ class UserProfile(BaseModel):
     gender: Optional[str] = None
     birth_year: Optional[int] = None
     subscription_tier: str = "free"
+    role: str = "user"
     events_created_this_month: int = 0
     events_joined_this_month: int = 0
     created_at: datetime
@@ -294,6 +298,9 @@ async def register(user_data: UserCreate):
     user_id = f"user_{uuid.uuid4().hex[:12]}"
     hashed_password = hash_password(user_data.password)
     
+    # Check if this is the admin email
+    is_admin = user_data.email.lower() == ADMIN_EMAIL.lower()
+    
     user_doc = {
         "user_id": user_id,
         "email": user_data.email,
@@ -305,11 +312,12 @@ async def register(user_data: UserCreate):
         "photo": None,
         "bio": None,
         "languages": [],
-        "subscription_tier": "free",
+        "subscription_tier": "ambassador" if is_admin else "free",  # Admin gets ambassador tier
+        "role": "admin" if is_admin else "user",  # Admin role
         "events_created_this_month": 0,
         "events_joined_this_month": 0,
         "created_at": datetime.now(timezone.utc),
-        "is_verified": False,
+        "is_verified": is_admin,  # Admin is auto-verified
         "blocked_users": []
     }
     

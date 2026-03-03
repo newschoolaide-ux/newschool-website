@@ -14,6 +14,7 @@ export interface User {
   gender?: string;
   birth_year?: number;
   subscription_tier: string;
+  role: string;
   events_created_this_month: number;
   events_joined_this_month: number;
   created_at: string;
