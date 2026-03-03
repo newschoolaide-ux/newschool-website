@@ -1253,7 +1253,7 @@ async def shutdown_db_client():
 
 
 # Serve landing page files for download
-@app.get("/download/index.html")
+@api_router.get("/download/index.html")
 async def download_index():
     return FileResponse(
         ROOT_DIR / "static" / "index.html",
@@ -1261,7 +1261,7 @@ async def download_index():
         filename="index.html"
     )
 
-@app.get("/download/logo.png")
+@api_router.get("/download/logo.png")
 async def download_logo():
     return FileResponse(
         ROOT_DIR / "static" / "logo.png",
@@ -1269,7 +1269,7 @@ async def download_logo():
         filename="logo.png"
     )
 
-@app.get("/download/vercel.json")
+@api_router.get("/download/vercel.json")
 async def download_vercel():
     return FileResponse(
         ROOT_DIR / "static" / "vercel.json",
