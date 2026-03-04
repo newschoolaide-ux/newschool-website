@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Image, Animated, Easing, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Index() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -10,9 +9,8 @@ export default function Index() {
   const [showSplash, setShowSplash] = useState(true);
   
   // Animations - TikTok/Uber Eats style
-  const logoScale = useRef(new Animated.Value(0.6)).current;
+  const logoScale = useRef(new Animated.Value(0.5)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const circleScale = useRef(new Animated.Value(0)).current;
   const pulseScale = useRef(new Animated.Value(1)).current;
   const screenOpacity = useRef(new Animated.Value(1)).current;
   const glowOpacity = useRef(new Animated.Value(0)).current;
@@ -20,54 +18,47 @@ export default function Index() {
   useEffect(() => {
     // Smooth animation sequence inspired by TikTok/Uber Eats
     const animationSequence = Animated.sequence([
-      // Phase 1: Circle appears first with spring effect
-      Animated.spring(circleScale, {
-        toValue: 1,
-        tension: 60,
-        friction: 7,
-        useNativeDriver: true,
-      }),
-      // Phase 2: Logo fades in inside the circle
+      // Phase 1: Logo appears with spring effect + glow
       Animated.parallel([
+        Animated.spring(logoScale, {
+          toValue: 1,
+          tension: 60,
+          friction: 7,
+          useNativeDriver: true,
+        }),
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 400,
+          duration: 500,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(glowOpacity, {
-          toValue: 1,
-          duration: 600,
+          toValue: 0.6,
+          duration: 700,
           useNativeDriver: true,
         }),
       ]),
-      // Phase 3: Subtle "breathing" pulse effect (like TikTok)
+      // Phase 2: Subtle "breathing" pulse effect (like TikTok)
       Animated.sequence([
         Animated.timing(pulseScale, {
-          toValue: 1.05,
-          duration: 350,
+          toValue: 1.06,
+          duration: 400,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(pulseScale, {
           toValue: 1,
-          duration: 350,
+          duration: 400,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
       ]),
-      // Phase 4: Hold briefly
-      Animated.delay(500),
-      // Phase 5: Elegant exit - scale up and fade out (Uber Eats style)
+      // Phase 3: Hold briefly
+      Animated.delay(600),
+      // Phase 4: Elegant exit - scale up and fade out (Uber Eats style)
       Animated.parallel([
         Animated.timing(logoScale, {
-          toValue: 1.2,
-          duration: 350,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(circleScale, {
-          toValue: 1.2,
+          toValue: 1.3,
           duration: 350,
           easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
@@ -76,6 +67,11 @@ export default function Index() {
           toValue: 0,
           duration: 300,
           easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowOpacity, {
+          toValue: 0,
+          duration: 300,
           useNativeDriver: true,
         }),
         Animated.timing(screenOpacity, {
@@ -104,58 +100,40 @@ export default function Index() {
     }
   }, [showSplash, isLoading, isAuthenticated]);
 
-  // Combined scale transforms
-  const combinedLogoScale = Animated.multiply(logoScale, pulseScale);
-  const combinedCircleScale = Animated.multiply(circleScale, pulseScale);
+  // Combined scale transform
+  const combinedScale = Animated.multiply(logoScale, pulseScale);
 
   if (showSplash) {
     return (
       <Animated.View style={[styles.splashContainer, { opacity: screenOpacity }]}>
         <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
         <View style={styles.contentContainer}>
-          {/* Glow effect behind the circle */}
+          {/* Glow effect behind the logo */}
           <Animated.View 
             style={[
               styles.glowEffect,
               {
                 opacity: glowOpacity,
-                transform: [{ scale: combinedCircleScale }],
+                transform: [{ scale: combinedScale }],
               }
             ]}
           />
           
-          {/* Main circle container with gradient */}
+          {/* Circular logo */}
           <Animated.View
             style={[
-              styles.circleContainer,
+              styles.logoContainer,
               {
-                transform: [{ scale: combinedCircleScale }],
+                opacity: logoOpacity,
+                transform: [{ scale: combinedScale }],
               },
             ]}
           >
-            <LinearGradient
-              colors={['#D63864', '#B8295A', '#8B1E4A']}
-              style={styles.gradientCircle}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              {/* Logo inside the circle */}
-              <Animated.View
-                style={[
-                  styles.logoWrapper,
-                  {
-                    opacity: logoOpacity,
-                    transform: [{ scale: combinedLogoScale }],
-                  },
-                ]}
-              >
-                <Image
-                  source={require('../assets/images/logo-newschool.png')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-              </Animated.View>
-            </LinearGradient>
+            <Image
+              source={require('../assets/images/logo-newschool-circle.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </Animated.View>
         </View>
       </Animated.View>
@@ -183,42 +161,34 @@ const styles = StyleSheet.create({
   },
   glowEffect: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
     backgroundColor: '#D63864',
-    opacity: 0.3,
     shadowColor: '#D63864',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
-    shadowRadius: 40,
+    shadowRadius: 50,
     elevation: 20,
   },
-  circleContainer: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
+  logoContainer: {
+    width: 220,
+    height: 220,
+    borderRadius: 110,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
     // Shadow for depth
     shadowColor: '#D63864',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
-    shadowRadius: 25,
+    shadowRadius: 30,
     elevation: 15,
   },
-  gradientCircle: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 90,
-  },
-  logoWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   logo: {
-    width: 110,
-    height: 110,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
   },
   loadingContainer: {
     flex: 1,
