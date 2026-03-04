@@ -1,61 +1,85 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Image, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, Image, Animated, Easing, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { LinearGradient } from 'expo-linear-gradient';
-
-const { width, height } = Dimensions.get('window');
 
 export default function Index() {
   const { isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
   
-  // Animations
-  const logoScale = useRef(new Animated.Value(0.3)).current;
+  // Animations - TikTok/Uber Eats style
+  const logoScale = useRef(new Animated.Value(0.6)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const bgOpacity = useRef(new Animated.Value(1)).current;
+  const logoRotate = useRef(new Animated.Value(0)).current;
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const screenOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Animation sequence like TikTok/Uber
-    Animated.sequence([
-      // 1. Fade in + scale up logo
+    // Smooth animation sequence inspired by TikTok/Uber Eats
+    const animationSequence = Animated.sequence([
+      // Phase 1: Logo appears with elegant fade-in and spring scale
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 600,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.spring(logoScale, {
           toValue: 1,
-          tension: 50,
-          friction: 7,
+          tension: 80,
+          friction: 8,
           useNativeDriver: true,
         }),
       ]),
-      // 2. Hold for a moment
-      Animated.delay(1500),
-      // 3. Scale up bigger + fade out
+      // Phase 2: Subtle "breathing" pulse effect (like TikTok)
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseScale, {
+            toValue: 1.08,
+            duration: 400,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(pulseScale, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+      // Phase 3: Hold briefly
+      Animated.delay(600),
+      // Phase 4: Elegant exit - scale up and fade out (Uber Eats style)
       Animated.parallel([
         Animated.timing(logoScale, {
-          toValue: 1.5,
-          duration: 400,
+          toValue: 1.3,
+          duration: 350,
+          easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(logoOpacity, {
           toValue: 0,
-          duration: 400,
+          duration: 350,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.timing(bgOpacity, {
+        Animated.timing(screenOpacity, {
           toValue: 0,
-          duration: 400,
+          duration: 350,
+          easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
       ]),
-    ]).start(() => {
+    ]);
+
+    animationSequence.start(() => {
       setShowSplash(false);
     });
+
+    return () => animationSequence.stop();
   }, []);
 
   useEffect(() => {
@@ -68,21 +92,20 @@ export default function Index() {
     }
   }, [showSplash, isLoading, isAuthenticated]);
 
+  // Combined scale transform
+  const combinedScale = Animated.multiply(logoScale, pulseScale);
+
   if (showSplash) {
     return (
-      <Animated.View style={[styles.splashContainer, { opacity: bgOpacity }]}>
-        <LinearGradient
-          colors={['#1a0a1a', '#0A0A0A', '#0a0a1a']}
-          style={styles.gradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+      <Animated.View style={[styles.splashContainer, { opacity: screenOpacity }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <View style={styles.contentContainer}>
           <Animated.View
             style={[
               styles.logoContainer,
               {
                 opacity: logoOpacity,
-                transform: [{ scale: logoScale }],
+                transform: [{ scale: combinedScale }],
               },
             ]}
           >
@@ -92,17 +115,15 @@ export default function Index() {
               resizeMode="contain"
             />
           </Animated.View>
-        </LinearGradient>
+        </View>
       </Animated.View>
     );
   }
 
+  // Transition container
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#1a0a1a', '#0A0A0A']}
-        style={styles.gradient}
-      />
+    <View style={styles.loadingContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
     </View>
   );
 }
@@ -110,21 +131,29 @@ export default function Index() {
 const styles = StyleSheet.create({
   splashContainer: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  gradient: {
+  contentContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    // Subtle shadow for depth
+    shadowColor: '#D63864',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 140,
+    height: 140,
   },
-  container: {
+  loadingContainer: {
     flex: 1,
     backgroundColor: '#0A0A0A',
   },
