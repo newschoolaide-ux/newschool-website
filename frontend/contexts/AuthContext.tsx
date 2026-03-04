@@ -164,21 +164,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      if (token) {
-        await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-      }
+      await AsyncStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+      // Even if there's an error, still clear local state
+      setToken(null);
+      setUser(null);
     }
-    
-    await AsyncStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
   };
 
   const refreshUser = async () => {
