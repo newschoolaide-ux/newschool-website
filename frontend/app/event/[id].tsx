@@ -18,22 +18,8 @@ import { fr } from 'date-fns/locale';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventStore } from '../../stores/eventStore';
 
-// Images par défaut selon le thème
-const THEME_IMAGES: { [key: string]: string } = {
-  'Gastronomie': 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80',
-  'Sport': 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&q=80',
-  'Musique': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80',
-  'Art & Culture': 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=800&q=80',
-  'Plein air': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80',
-  'Vie nocturne': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80',
-  'Business': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80',
-  'Échange linguistique': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
-  'Voyage': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80',
-  'Jeux': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&q=80',
-  'Autre': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
-};
-
-const DEFAULT_EVENT_IMAGE = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80';
+// Image par défaut - Logo New School
+const DEFAULT_EVENT_IMAGE = require('../../assets/images/default-event.png');
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,17 +28,6 @@ export default function EventDetailScreen() {
   const [isJoining, setIsJoining] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  // Obtenir l'image à afficher (photo personnalisée, image du thème, ou image par défaut)
-  const getEventImage = () => {
-    if (currentEvent?.photo) {
-      return currentEvent.photo;
-    }
-    if (currentEvent?.theme && THEME_IMAGES[currentEvent.theme]) {
-      return THEME_IMAGES[currentEvent.theme];
-    }
-    return DEFAULT_EVENT_IMAGE;
-  };
 
   useEffect(() => {
     if (token && id) {
@@ -154,7 +129,13 @@ export default function EventDetailScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Image source={{ uri: getEventImage() }} style={styles.coverImage} />
+        {currentEvent.photo ? (
+          <Image source={{ uri: currentEvent.photo }} style={styles.coverImage} />
+        ) : (
+          <View style={styles.defaultCoverContainer}>
+            <Image source={DEFAULT_EVENT_IMAGE} style={styles.defaultCoverImage} resizeMode="contain" />
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.backButton, { top: insets.top + 8 }]}
@@ -336,6 +317,17 @@ const styles = StyleSheet.create({
   coverImage: {
     width: '100%',
     height: 280,
+  },
+  defaultCoverContainer: {
+    width: '100%',
+    height: 280,
+    backgroundColor: '#E8EBF0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  defaultCoverImage: {
+    width: '80%',
+    height: '80%',
   },
   coverPlaceholder: {
     backgroundColor: '#1A1A1A',
