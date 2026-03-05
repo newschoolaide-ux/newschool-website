@@ -326,8 +326,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   defaultCoverImage: {
-    width: '80%',
-    height: '80%',
+    width: '100%',
+    height: '100%',
   },
   coverPlaceholder: {
     backgroundColor: '#1A1A1A',
