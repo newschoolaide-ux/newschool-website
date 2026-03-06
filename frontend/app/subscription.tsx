@@ -18,7 +18,7 @@ import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchase
 const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 // RevenueCat API Key
-const REVENUECAT_API_KEY = 'test_KOYxYFeR0ZhXjyZJWvyIQKXPyU0';
+const REVENUECAT_API_KEY = 'appl_SLlNfoDZQjMZcaJDdbNGFILCOQY';
 
 interface Tier {
   tier: string;
@@ -96,9 +96,11 @@ export default function SubscriptionScreen() {
       const entitlements = customerInfo.entitlements.active;
       let currentTier = 'free';
       
-      if (entitlements['NEW SCHOOL Pro']) {
+      // Check for "premium" entitlement (as configured in RevenueCat)
+      if (entitlements['premium'] || entitlements['Premium']) {
         // Determine tier based on product
-        const productId = entitlements['NEW SCHOOL Pro'].productIdentifier;
+        const entitlement = entitlements['premium'] || entitlements['Premium'];
+        const productId = entitlement.productIdentifier;
         currentTier = PRODUCT_TO_TIER[productId] || 'standard';
       }
       
