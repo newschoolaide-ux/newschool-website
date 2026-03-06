@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.newschool.app",
+      "bundleIdentifier": "com.newschoolaide.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Trouver des événements près de vous",
         "NSLocationAlwaysUsageDescription": "Trouver des événements près de vous",
@@ -25,7 +26,8 @@
         "backgroundColor": "#0A0A0A"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.newschool.app",
+      "package": "com.newschoolaide.app",
+      "versionCode": 1,
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -53,6 +55,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "newschool-app"
+      }
+    },
+    "owner": "newschoolaide"
   }
 }
