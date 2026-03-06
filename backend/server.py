@@ -1180,6 +1180,24 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
+# ======================= SUBSCRIPTION SYNC ENDPOINT =======================
+
+@api_router.post("/subscriptions/sync")
+async def sync_subscription(request: Request, current_user: dict = Depends(get_current_user)):
+    """Sync subscription status from RevenueCat"""
+    data = await request.json()
+    tier = data.get("tier", "free")
+    
+    if tier not in ["free", "standard", "ambassador"]:
+        tier = "free"
+    
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]},
+        {"$set": {"subscription_tier": tier}}
+    )
+    
+    return {"message": "Subscription synced", "tier": tier}
+
 # Languages and Nationalities lists
 LANGUAGES = ["Français", "English", "Español", "Deutsch", "Italiano", "Português", "中文", "日本語", "한국어", "العربية", "हिन्दी", "Русский"]
 NATIONALITIES = ["French", "American", "British", "Spanish", "German", "Italian", "Portuguese", "Chinese", "Japanese", "Korean", "Brazilian", "Mexican", "Canadian", "Australian", "Indian", "Russian", "Other"]

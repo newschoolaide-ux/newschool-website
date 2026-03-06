@@ -7,13 +7,18 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchases';
 
 const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+// RevenueCat API Key
+const REVENUECAT_API_KEY = 'test_KOYxYFeR0ZhXjyZJWvyIQKXPyU0';
 
 interface Tier {
   tier: string;
@@ -40,17 +45,78 @@ const TIER_NAMES: Record<string, string> = {
   ambassador: 'Ambassadeur',
 };
 
+// Map RevenueCat product IDs to tier names
+const PRODUCT_TO_TIER: Record<string, string> = {
+  'standard_monthly': 'standard',
+  'standard_yearly': 'standard',
+  'ambassador_monthly': 'ambassador',
+  'ambassador_yearly': 'ambassador',
+};
+
 export default function SubscriptionScreen() {
   const { user, token, refreshUser } = useAuth();
   const [tiers, setTiers] = useState<Tier[]>([]);
+  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [isPurchasesConfigured, setIsPurchasesConfigured] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
+    initializePurchases();
     fetchTiers();
   }, []);
+
+  const initializePurchases = async () => {
+    try {
+      // Configure RevenueCat
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+        setIsPurchasesConfigured(true);
+        
+        // Fetch available packages
+        const offerings = await Purchases.getOfferings();
+        if (offerings.current && offerings.current.availablePackages.length > 0) {
+          setPackages(offerings.current.availablePackages);
+        }
+        
+        // Check current subscription status
+        const customerInfo = await Purchases.getCustomerInfo();
+        await syncSubscriptionWithBackend(customerInfo);
+      }
+    } catch (error) {
+      console.log('RevenueCat not available (web or error):', error);
+    }
+  };
+
+  const syncSubscriptionWithBackend = async (customerInfo: CustomerInfo) => {
+    try {
+      // Check active entitlements
+      const entitlements = customerInfo.entitlements.active;
+      let currentTier = 'free';
+      
+      if (entitlements['NEW SCHOOL Pro']) {
+        // Determine tier based on product
+        const productId = entitlements['NEW SCHOOL Pro'].productIdentifier;
+        currentTier = PRODUCT_TO_TIER[productId] || 'standard';
+      }
+      
+      // Sync with backend
+      await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/subscriptions/sync`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tier: currentTier }),
+      });
+      
+      await refreshUser();
+    } catch (error) {
+      console.error('Error syncing subscription:', error);
+    }
+  };
 
   const fetchTiers = async () => {
     try {
@@ -72,9 +138,35 @@ export default function SubscriptionScreen() {
     if (tierName === user?.subscription_tier) return;
     if (tierName === 'free') return;
 
+    // If RevenueCat is available, use real payments
+    if (isPurchasesConfigured && packages.length > 0) {
+      // Find the matching package
+      const packageId = tierName === 'standard' ? 'standard_monthly' : 'ambassador_monthly';
+      const selectedPackage = packages.find(p => 
+        p.product.identifier.includes(tierName) || p.identifier.toLowerCase().includes('monthly')
+      );
+
+      if (selectedPackage) {
+        setUpgrading(tierName);
+        try {
+          const { customerInfo } = await Purchases.purchasePackage(selectedPackage);
+          await syncSubscriptionWithBackend(customerInfo);
+          Alert.alert('Succès', `Vous êtes maintenant ${TIER_NAMES[tierName]} !`);
+        } catch (error: any) {
+          if (!error.userCancelled) {
+            Alert.alert('Erreur', 'Le paiement a échoué. Veuillez réessayer.');
+          }
+        } finally {
+          setUpgrading(null);
+        }
+        return;
+      }
+    }
+
+    // Fallback: Simulated purchase (for testing/web)
     Alert.alert(
       'Confirmer l\'abonnement',
-      `Voulez-vous passer à l'abonnement ${TIER_NAMES[tierName]} ?\n\n⚠️ Note: Ceci est une simulation. Dans la version finale, vous serez redirigé vers le paiement.`,
+      `Voulez-vous passer à l'abonnement ${TIER_NAMES[tierName]} ?\n\n⚠️ Mode Test: Le paiement sera simulé.`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -99,7 +191,7 @@ export default function SubscriptionScreen() {
                 Alert.alert('Erreur', error.detail || 'Une erreur est survenue');
               }
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de mettre à jour l\'abonnement');
+              Alert.alert('Erreur', 'Une erreur est survenue');
             } finally {
               setUpgrading(null);
             }
@@ -109,117 +201,141 @@ export default function SubscriptionScreen() {
     );
   };
 
-  const currentTierIndex = tiers.findIndex(t => t.tier === user?.subscription_tier);
+  const handleRestore = async () => {
+    if (!isPurchasesConfigured) {
+      Alert.alert('Info', 'La restauration des achats n\'est pas disponible sur cette plateforme.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const customerInfo = await Purchases.restorePurchases();
+      await syncSubscriptionWithBackend(customerInfo);
+      Alert.alert('Succès', 'Vos achats ont été restaurés.');
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de restaurer les achats.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
+      <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color="#D946EF" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#FFF" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Abonnements</Text>
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.intro}>
-          <Ionicons name="diamond" size={48} color="#D946EF" />
-          <Text style={styles.introTitle}>Passez au niveau supérieur</Text>
-          <Text style={styles.introText}>
-            Débloquez plus de créations et participations à des New School chaque mois
-          </Text>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.title}>Choisissez votre formule</Text>
+        <Text style={styles.subtitle}>
+          Débloquez plus de fonctionnalités avec nos abonnements premium
+        </Text>
+
+        {/* Current subscription info */}
+        <View style={styles.currentPlan}>
+          <Text style={styles.currentPlanLabel}>Votre abonnement actuel</Text>
+          <View style={styles.currentPlanBadge}>
+            <Ionicons
+              name={TIER_ICONS[user?.subscription_tier || 'free'] as any}
+              size={20}
+              color={TIER_COLORS[user?.subscription_tier || 'free']}
+            />
+            <Text style={[styles.currentPlanText, { color: TIER_COLORS[user?.subscription_tier || 'free'] }]}>
+              {TIER_NAMES[user?.subscription_tier || 'free']}
+            </Text>
+          </View>
         </View>
 
-        {tiers.map((tier, index) => {
+        {tiers.map((tier) => {
           const isCurrentTier = tier.tier === user?.subscription_tier;
-          const isPremium = tier.price > 0;
-          const isDowngrade = index < currentTierIndex;
+          const tierColor = TIER_COLORS[tier.tier];
+          const tierIcon = TIER_ICONS[tier.tier];
+          const isUpgrading = upgrading === tier.tier;
+
+          // Find price from RevenueCat packages if available
+          let displayPrice = tier.price > 0 ? `${tier.price}€/mois` : 'Gratuit';
+          const matchingPackage = packages.find(p => 
+            p.product.identifier.toLowerCase().includes(tier.tier)
+          );
+          if (matchingPackage) {
+            displayPrice = matchingPackage.product.priceString + '/mois';
+          }
 
           return (
-            <TouchableOpacity
+            <View
               key={tier.tier}
               style={[
                 styles.tierCard,
                 isCurrentTier && styles.tierCardActive,
-                { borderColor: TIER_COLORS[tier.tier] || '#D946EF' }
+                { borderColor: isCurrentTier ? tierColor : '#333' },
               ]}
-              onPress={() => handleUpgrade(tier.tier)}
-              disabled={isCurrentTier || isDowngrade || tier.tier === 'free'}
-              activeOpacity={0.8}
             >
               {tier.tier === 'ambassador' && (
                 <View style={styles.popularBadge}>
-                  <Text style={styles.popularBadgeText}>RECOMMANDÉ</Text>
+                  <Text style={styles.popularBadgeText}>Populaire</Text>
                 </View>
               )}
-              
+
               <View style={styles.tierHeader}>
-                <View style={[styles.tierIcon, { backgroundColor: TIER_COLORS[tier.tier] || '#D946EF' }]}>
-                  <Ionicons name={TIER_ICONS[tier.tier] as any || 'star'} size={24} color="#FFF" />
-                </View>
+                <Ionicons name={tierIcon as any} size={32} color={tierColor} />
                 <View style={styles.tierInfo}>
-                  <Text style={styles.tierName}>{TIER_NAMES[tier.tier] || tier.tier}</Text>
-                  <Text style={styles.tierPrice}>
-                    {tier.price === 0 ? 'Gratuit' : `${tier.price.toFixed(2).replace('.', ',')}€/mois`}
+                  <Text style={styles.tierName}>{TIER_NAMES[tier.tier]}</Text>
+                  <Text style={[styles.tierPrice, { color: tierColor }]}>
+                    {displayPrice}
                   </Text>
                 </View>
-                {isCurrentTier && (
-                  <View style={styles.currentBadge}>
-                    <Ionicons name="checkmark" size={16} color="#FFF" />
-                    <Text style={styles.currentBadgeText}>Actuel</Text>
-                  </View>
-                )}
               </View>
 
-              <View style={styles.limitBadge}>
-                <Ionicons name="calendar" size={16} color="#D946EF" />
-                <Text style={styles.limitText}>
-                  {tier.monthly_limit === -1 
-                    ? 'Illimité' 
-                    : `${tier.monthly_limit} création${tier.monthly_limit > 1 ? 's' : ''} ou participation${tier.monthly_limit > 1 ? 's' : ''} / mois`}
-                </Text>
-              </View>
-
-              <View style={styles.featuresList}>
-                {tier.features.map((feature, featureIndex) => (
-                  <View key={featureIndex} style={styles.featureItem}>
-                    <Ionicons name="checkmark-circle" size={18} color={TIER_COLORS[tier.tier] || '#D946EF'} />
+              <View style={styles.features}>
+                {tier.features.map((feature, index) => (
+                  <View key={index} style={styles.featureRow}>
+                    <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
                     <Text style={styles.featureText}>{feature}</Text>
                   </View>
                 ))}
               </View>
 
-              {isPremium && !isCurrentTier && !isDowngrade && (
-                <TouchableOpacity
-                  style={[styles.upgradeButton, { backgroundColor: TIER_COLORS[tier.tier] || '#D946EF' }]}
-                  onPress={() => handleUpgrade(tier.tier)}
-                  disabled={upgrading === tier.tier}
-                >
-                  {upgrading === tier.tier ? (
-                    <ActivityIndicator color="#FFF" />
-                  ) : (
-                    <Text style={styles.upgradeButtonText}>Choisir ce plan</Text>
-                  )}
-                </TouchableOpacity>
-              )}
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.upgradeButton,
+                  isCurrentTier && styles.upgradeButtonDisabled,
+                  !isCurrentTier && { backgroundColor: tierColor },
+                ]}
+                onPress={() => handleUpgrade(tier.tier)}
+                disabled={isCurrentTier || isUpgrading}
+              >
+                {isUpgrading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.upgradeButtonText}>
+                    {isCurrentTier ? 'Abonnement actuel' : tier.price === 0 ? 'Gratuit' : 'Choisir'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           );
         })}
 
-        <View style={styles.disclaimer}>
-          <Ionicons name="information-circle-outline" size={16} color="#666" />
-          <Text style={styles.disclaimerText}>
-            Les abonnements sont gérés via l'App Store ou Google Play. Vous pouvez annuler à tout moment.
-          </Text>
-        </View>
+        {/* Restore purchases button */}
+        <TouchableOpacity style={styles.restoreButton} onPress={handleRestore}>
+          <Text style={styles.restoreButtonText}>Restaurer mes achats</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.disclaimer}>
+          Les abonnements se renouvellent automatiquement. Vous pouvez annuler à tout moment dans les paramètres de votre compte App Store.
+        </Text>
       </ScrollView>
     </View>
   );
@@ -230,20 +346,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0A',
   },
-  loadingContainer: {
-    alignItems: 'center',
+  centered: {
     justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#1A1A1A',
   },
-  closeButton: {
+  backButton: {
     width: 44,
     height: 44,
     alignItems: 'center',
@@ -254,29 +370,45 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFF',
   },
-  content: {
+  scrollView: {
     flex: 1,
   },
-  contentContainer: {
+  scrollContent: {
     padding: 20,
     paddingBottom: 40,
   },
-  intro: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  introTitle: {
-    fontSize: 24,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFF',
-    marginTop: 16,
     marginBottom: 8,
   },
-  introText: {
-    fontSize: 15,
+  subtitle: {
+    fontSize: 16,
     color: '#888',
-    textAlign: 'center',
-    lineHeight: 22,
+    marginBottom: 24,
+  },
+  currentPlan: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  currentPlanLabel: {
+    color: '#888',
+    fontSize: 14,
+  },
+  currentPlanBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  currentPlanText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   tierCard: {
     backgroundColor: '#1A1A1A',
@@ -287,7 +419,7 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   tierCardActive: {
-    backgroundColor: 'rgba(217, 70, 239, 0.1)',
+    backgroundColor: '#1F1A2E',
   },
   popularBadge: {
     position: 'absolute',
@@ -300,72 +432,36 @@ const styles = StyleSheet.create({
   },
   popularBadgeText: {
     color: '#000',
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '600',
   },
   tierHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
     marginBottom: 16,
-  },
-  tierIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tierInfo: {
     flex: 1,
-    marginLeft: 14,
   },
   tierName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#FFF',
   },
   tierPrice: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 2,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 4,
   },
-  currentBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  currentBadgeText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  limitBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(217, 70, 239, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginBottom: 16,
-    gap: 8,
-  },
-  limitText: {
-    color: '#D946EF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  featuresList: {
+  features: {
     marginBottom: 16,
   },
-  featureItem: {
+  featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 10,
+    gap: 12,
+    marginBottom: 8,
   },
   featureText: {
     color: '#CCC',
@@ -373,26 +469,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   upgradeButton: {
+    backgroundColor: '#333',
     borderRadius: 12,
-    height: 48,
+    paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  upgradeButtonDisabled: {
+    backgroundColor: '#333',
   },
   upgradeButtonText: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  disclaimer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 16,
-    gap: 8,
+  restoreButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 8,
   },
-  disclaimerText: {
+  restoreButtonText: {
+    color: '#D946EF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  disclaimer: {
     color: '#666',
     fontSize: 12,
-    flex: 1,
+    textAlign: 'center',
+    marginTop: 16,
     lineHeight: 18,
   },
 });
