@@ -18,6 +18,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +32,7 @@ export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
 
   const handleRegister = async () => {
-    if (!firstName || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -53,7 +54,7 @@ export default function RegisterScreen() {
 
     setIsLoading(true);
     try {
-      await register(email, password, firstName, phone || undefined, gender, birthYear ? parseInt(birthYear) : undefined);
+      await register(email, password, firstName, lastName, phone || undefined, gender, birthYear ? parseInt(birthYear) : undefined);
       router.replace('/(tabs)/home');
     } catch (error: any) {
       Alert.alert('Erreur', error.message);
@@ -89,6 +90,17 @@ export default function RegisterScreen() {
               placeholderTextColor="#666"
               value={firstName}
               onChangeText={setFirstName}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="person-outline" size={20} color="#888" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Nom de famille *"
+              placeholderTextColor="#666"
+              value={lastName}
+              onChangeText={setLastName}
             />
           </View>
 

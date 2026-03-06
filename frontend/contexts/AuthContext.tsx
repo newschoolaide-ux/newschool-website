@@ -7,6 +7,7 @@ export interface User {
   user_id: string;
   email: string;
   first_name: string;
+  last_name?: string;
   photo?: string;
   bio?: string;
   languages: string[];
@@ -27,11 +28,13 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, firstName: string, phone?: string, gender?: string, birthYear?: number) => Promise<void>;
+  register: (email: string, password: string, firstName: string, lastName?: string, phone?: string, gender?: string, birthYear?: number) => Promise<void>;
   loginWithGoogle: () => void;
   handleOAuthCallback: (sessionId: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<string>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,7 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await refreshUser();
   };
 
-  const register = async (email: string, password: string, firstName: string, phone?: string, gender?: string, birthYear?: number) => {
+  const register = async (email: string, password: string, firstName: string, lastName?: string, phone?: string, gender?: string, birthYear?: number) => {
     const response = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
@@ -113,7 +116,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       body: JSON.stringify({ 
         email, 
         password, 
-        first_name: firstName, 
+        first_name: firstName,
+        last_name: lastName,
         phone,
         gender,
         birth_year: birthYear
@@ -130,6 +134,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(data.token);
     
     await refreshUser();
+  };
+
+  const forgotPassword = async (email: string): Promise<string> => {
+    const response = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to send reset email');
+    }
+
+    const data = await response.json();
+    return data.token; // For demo purposes, in production this would be sent via email
+  };
+
+  const resetPassword = async (resetToken: string, newPassword: string): Promise<void> => {
+    const response = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token: resetToken, new_password: newPassword }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to reset password');
+    }
   };
 
   // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
@@ -204,6 +241,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         handleOAuthCallback,
         logout,
         refreshUser,
+        forgotPassword,
+        resetPassword,
       }}
     >
       {children}

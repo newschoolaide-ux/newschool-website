@@ -164,6 +164,19 @@ export default function ProfileScreen() {
           <Ionicons name="chevron-forward" size={20} color="#666" />
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => router.push('/history')}
+        >
+          <View style={styles.menuItemLeft}>
+            <View style={[styles.menuIcon, { backgroundColor: '#FF9800' }]}>
+              <Ionicons name="time-outline" size={20} color="#FFF" />
+            </View>
+            <Text style={styles.menuItemText}>Mes Schools passées</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#666" />
+        </TouchableOpacity>
+
         {userCreatedEvents.slice(0, 3).map((event) => (
           <TouchableOpacity
             key={event.event_id}

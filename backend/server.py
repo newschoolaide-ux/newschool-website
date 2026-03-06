@@ -128,6 +128,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     first_name: str
+    last_name: Optional[str] = None
     phone: Optional[str] = None
     gender: Optional[str] = None  # "male", "female", "other"
     birth_year: Optional[int] = None
@@ -136,10 +137,18 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 class UserProfile(BaseModel):
     user_id: str
     email: str
     first_name: str
+    last_name: Optional[str] = None
     photo: Optional[str] = None
     bio: Optional[str] = None
     languages: List[str] = []
@@ -155,6 +164,7 @@ class UserProfile(BaseModel):
 
 class UserProfileUpdate(BaseModel):
     first_name: Optional[str] = None
+    last_name: Optional[str] = None
     photo: Optional[str] = None
     bio: Optional[str] = None
     languages: Optional[List[str]] = None
@@ -308,6 +318,7 @@ async def register(user_data: UserCreate):
         "email": user_data.email,
         "password": hashed_password,
         "first_name": user_data.first_name,
+        "last_name": user_data.last_name,
         "phone": user_data.phone,
         "gender": user_data.gender,
         "birth_year": user_data.birth_year,
@@ -331,6 +342,7 @@ async def register(user_data: UserCreate):
         "user_id": user_id,
         "email": user_data.email,
         "first_name": user_data.first_name,
+        "last_name": user_data.last_name,
         "token": token
     }
 
@@ -469,6 +481,69 @@ async def logout(request: Request, response: Response, current_user: dict = Depe
     response.delete_cookie("session_token", path="/")
     return {"message": "Logged out successfully"}
 
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """Request password reset - sends email with reset token"""
+    user = await db.users.find_one({"email": data.email})
+    if not user:
+        # Don't reveal if email exists for security
+        return {"message": "Si cet email existe, un lien de réinitialisation a été envoyé."}
+    
+    # Generate reset token
+    reset_token = uuid.uuid4().hex
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Store reset token in database
+    await db.password_resets.delete_many({"email": data.email})  # Remove old tokens
+    await db.password_resets.insert_one({
+        "email": data.email,
+        "token": reset_token,
+        "expires_at": expires_at,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    # In production, send email with reset link
+    # For now, we log it (in production use SendGrid, SES, etc.)
+    logger.info(f"Password reset token for {data.email}: {reset_token}")
+    
+    # TODO: Send actual email with reset link like:
+    # https://yourapp.com/reset-password?token={reset_token}
+    
+    return {"message": "Si cet email existe, un lien de réinitialisation a été envoyé.", "token": reset_token}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    """Reset password using token"""
+    reset_record = await db.password_resets.find_one({"token": data.token})
+    
+    if not reset_record:
+        raise HTTPException(status_code=400, detail="Token invalide ou expiré")
+    
+    expires_at = reset_record["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
+        await db.password_resets.delete_one({"token": data.token})
+        raise HTTPException(status_code=400, detail="Token expiré")
+    
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Le mot de passe doit contenir au moins 6 caractères")
+    
+    # Update password
+    hashed = hash_password(data.new_password)
+    await db.users.update_one(
+        {"email": reset_record["email"]},
+        {"$set": {"password": hashed}}
+    )
+    
+    # Remove used token
+    await db.password_resets.delete_one({"token": data.token})
+    
+    return {"message": "Mot de passe réinitialisé avec succès"}
+
 # ======================= PUSH NOTIFICATIONS ENDPOINT =======================
 
 class PushTokenUpdate(BaseModel):
@@ -554,6 +629,56 @@ async def get_blocked_users(current_user: dict = Depends(get_current_user)):
         {"_id": 0, "user_id": 1, "first_name": 1, "photo": 1}
     ).to_list(100)
     return blocked_users
+
+@api_router.get("/users/history")
+async def get_user_event_history(current_user: dict = Depends(get_current_user)):
+    """Get history of past events the user participated in"""
+    user_id = current_user["user_id"]
+    
+    # Find all events where user was a participant or creator, that are ended or cancelled
+    past_events = await db.events.find({
+        "$or": [
+            {"creator_id": user_id},
+            {"participants.user_id": user_id}
+        ],
+        "$or": [
+            {"status": {"$in": ["ended", "cancelled"]}},
+            {"start_time": {"$lt": datetime.now(timezone.utc)}}
+        ]
+    }).sort("start_time", -1).to_list(50)
+    
+    # Enrich with participant details
+    result = []
+    for event in past_events:
+        # Get full participant info
+        participant_ids = [p["user_id"] for p in event.get("participants", [])]
+        participants = await db.users.find(
+            {"user_id": {"$in": participant_ids}},
+            {"_id": 0, "user_id": 1, "first_name": 1, "last_name": 1, "photo": 1}
+        ).to_list(100)
+        
+        # Get creator info
+        creator = await db.users.find_one(
+            {"user_id": event["creator_id"]},
+            {"_id": 0, "user_id": 1, "first_name": 1, "last_name": 1, "photo": 1}
+        )
+        
+        result.append({
+            "event_id": event["event_id"],
+            "name": event["name"],
+            "description": event.get("description", ""),
+            "location_name": event.get("location_name", ""),
+            "theme": event.get("theme"),
+            "photo": event.get("photo"),
+            "start_time": event.get("start_time"),
+            "created_at": event.get("created_at"),
+            "status": event.get("status", "ended"),
+            "creator": creator,
+            "participants": participants,
+            "participant_count": len(participants)
+        })
+    
+    return result
 
 # ======================= EVENT ENDPOINTS =======================
 

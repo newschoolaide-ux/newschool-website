@@ -8,6 +8,7 @@ import {
   Dimensions,
   Platform,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventStore, Event } from '../../stores/eventStore';
+import Slider from '@react-native-community/slider';
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,6 +34,13 @@ const THEME_COLORS: { [key: string]: string } = {
   'Jeux': '#84CC16',            // Lime
   'Autre': '#D946EF',           // Default Pink
 };
+
+const THEMES = [
+  'Sport', 'Musique', 'Gastronomie', 'Art & Culture', 'Plein air',
+  'Vie nocturne', 'Business', 'Échange linguistique', 'Voyage', 'Jeux', 'Autre'
+];
+
+const RADIUS_OPTIONS = [5, 10, 25, 50, 100, 200];
 
 const getThemeColor = (theme?: string) => {
   return theme ? (THEME_COLORS[theme] || THEME_COLORS['Autre']) : THEME_COLORS['Autre'];
@@ -55,6 +64,9 @@ export default function MapScreen() {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [radius, setRadius] = useState(50);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
@@ -71,25 +83,41 @@ export default function MapScreen() {
       // Only refresh if more than 2 seconds since last refresh (avoid double refresh)
       if (now - lastRefresh.current > 2000) {
         lastRefresh.current = now;
-        fetchNearbyEvents(token, location.latitude, location.longitude, 200);
+        fetchNearbyEvents(token, location.latitude, location.longitude, radius);
       }
     }
   }, [pathname, token, location]);
 
   useEffect(() => {
     if (token && location) {
-      // Fetch events in a larger radius (200km) to see more events
-      fetchNearbyEvents(token, location.latitude, location.longitude, 200);
+      fetchNearbyEvents(token, location.latitude, location.longitude, radius);
     }
-  }, [token, location]);
+  }, [token, location, radius]);
 
   const refreshEvents = async () => {
     if (!token || !location) return;
     setIsRefreshing(true);
-    await fetchNearbyEvents(token, location.latitude, location.longitude, 200);
+    await fetchNearbyEvents(token, location.latitude, location.longitude, radius);
     lastRefresh.current = Date.now();
     setIsRefreshing(false);
   };
+
+  const toggleTheme = (theme: string) => {
+    setSelectedThemes(prev => 
+      prev.includes(theme) 
+        ? prev.filter(t => t !== theme)
+        : [...prev, theme]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedThemes([]);
+  };
+
+  // Filter events by selected themes
+  const filteredEvents = selectedThemes.length > 0
+    ? nearbyEvents.filter(event => event.theme && selectedThemes.includes(event.theme))
+    : nearbyEvents;
 
   const getLocation = async () => {
     try {
@@ -197,7 +225,7 @@ export default function MapScreen() {
         showsUserLocation
         showsMyLocationButton={false}
       >
-        {nearbyEvents.map((event) => (
+        {filteredEvents.map((event) => (
           <Marker
             key={event.event_id}
             coordinate={{
@@ -217,22 +245,59 @@ export default function MapScreen() {
         ))}
       </MapView>
 
+      {/* Header with filter button */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Carte des événements</Text>
-          <Text style={styles.headerSubtitle}>{nearbyEvents.length} événements à proximité</Text>
+          <Text style={styles.headerTitle}>Carte</Text>
+          <Text style={styles.headerSubtitle}>{filteredEvents.length} événements • {radius} km</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.refreshButton} 
-          onPress={refreshEvents}
-          disabled={isRefreshing}
-        >
-          {isRefreshing ? (
-            <ActivityIndicator size="small" color="#D946EF" />
-          ) : (
-            <Ionicons name="refresh" size={22} color="#D946EF" />
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={[styles.filterButton, selectedThemes.length > 0 && styles.filterButtonActive]} 
+            onPress={() => setShowFilters(true)}
+          >
+            <Ionicons name="search" size={20} color={selectedThemes.length > 0 ? "#FFF" : "#D946EF"} />
+            {selectedThemes.length > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{selectedThemes.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.refreshButton} 
+            onPress={refreshEvents}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <ActivityIndicator size="small" color="#D946EF" />
+            ) : (
+              <Ionicons name="refresh" size={22} color="#D946EF" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Radius slider */}
+      <View style={[styles.radiusContainer, { top: insets.top + 70 }]}>
+        <Text style={styles.radiusLabel}>Rayon : {radius} km</Text>
+        <Slider
+          style={styles.slider}
+          minimumValue={0}
+          maximumValue={RADIUS_OPTIONS.length - 1}
+          step={1}
+          value={RADIUS_OPTIONS.indexOf(radius)}
+          onSlidingComplete={(value) => setRadius(RADIUS_OPTIONS[Math.round(value)])}
+          minimumTrackTintColor="#D946EF"
+          maximumTrackTintColor="#333"
+          thumbTintColor="#D946EF"
+        />
+        <View style={styles.radiusMarkers}>
+          {RADIUS_OPTIONS.map((r) => (
+            <Text key={r} style={[styles.radiusMarkerText, radius === r && styles.radiusMarkerActive]}>
+              {r}
+            </Text>
+          ))}
+        </View>
       </View>
 
       <TouchableOpacity
@@ -277,6 +342,61 @@ export default function MapScreen() {
           </View>
         </TouchableOpacity>
       )}
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilters}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filtrer par thème</Text>
+              <TouchableOpacity onPress={() => setShowFilters(false)}>
+                <Ionicons name="close" size={24} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.themesContainer}>
+              {THEMES.map((theme) => (
+                <TouchableOpacity
+                  key={theme}
+                  style={[
+                    styles.themeItem,
+                    selectedThemes.includes(theme) && styles.themeItemActive
+                  ]}
+                  onPress={() => toggleTheme(theme)}
+                >
+                  <View style={[styles.themeColor, { backgroundColor: THEME_COLORS[theme] }]} />
+                  <Text style={[
+                    styles.themeItemText,
+                    selectedThemes.includes(theme) && styles.themeItemTextActive
+                  ]}>
+                    {theme}
+                  </Text>
+                  {selectedThemes.includes(theme) && (
+                    <Ionicons name="checkmark" size={20} color="#D946EF" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
+                <Text style={styles.clearButtonText}>Effacer les filtres</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.applyButton} 
+                onPress={() => setShowFilters(false)}
+              >
+                <Text style={styles.applyButtonText}>Appliquer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -314,20 +434,52 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(10, 10, 10, 0.9)',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
   },
   refreshButton: {
     backgroundColor: 'rgba(10, 10, 10, 0.9)',
     borderRadius: 12,
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  filterButton: {
+    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+    borderRadius: 12,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterButtonActive: {
+    backgroundColor: '#D946EF',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#FF4444',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
+  },
   },
   headerSubtitle: {
     fontSize: 14,
@@ -518,5 +670,122 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 16,
     marginTop: 12,
+  },
+  // Radius slider styles
+  radiusContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  radiusLabel: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  slider: {
+    width: '100%',
+    height: 30,
+  },
+  radiusMarkers: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  radiusMarkerText: {
+    color: '#666',
+    fontSize: 11,
+  },
+  radiusMarkerActive: {
+    color: '#D946EF',
+    fontWeight: '600',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1A1A1A',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  themesContainer: {
+    maxHeight: 300,
+  },
+  themeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#252525',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  themeItemActive: {
+    backgroundColor: '#D946EF20',
+    borderWidth: 1,
+    borderColor: '#D946EF',
+  },
+  themeColor: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 12,
+  },
+  themeItemText: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 16,
+  },
+  themeItemTextActive: {
+    color: '#D946EF',
+    fontWeight: '500',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  clearButton: {
+    flex: 1,
+    backgroundColor: '#333',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  applyButton: {
+    flex: 1,
+    backgroundColor: '#D946EF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
