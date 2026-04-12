@@ -68,6 +68,7 @@ interface EventStore {
   fetchNearbyEvents: (token: string, lat: number, lng: number, radius?: number) => Promise<void>;
   fetchEvent: (token: string, eventId: string) => Promise<void>;
   createEvent: (token: string, eventData: any) => Promise<Event>;
+  updateEvent: (token: string, eventId: string, eventData: any) => Promise<Event>;
   joinEvent: (token: string, eventId: string) => Promise<void>;
   leaveEvent: (token: string, eventId: string) => Promise<void>;
   deleteEvent: (token: string, eventId: string) => Promise<void>;
@@ -170,6 +171,37 @@ export const useEventStore = create<EventStore>((set, get) => ({
       set((state) => ({ 
         events: [data, ...state.events],
         userCreatedEvents: [data, ...state.userCreatedEvents],
+        isLoading: false 
+      }));
+      return data;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  updateEvent: async (token, eventId, eventData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update event');
+      }
+      
+      const data = await response.json();
+      set((state) => ({ 
+        events: state.events.map(e => e.event_id === eventId ? data : e),
+        userCreatedEvents: state.userCreatedEvents.map(e => e.event_id === eventId ? data : e),
+        currentEvent: data,
         isLoading: false 
       }));
       return data;

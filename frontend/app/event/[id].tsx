@@ -149,9 +149,17 @@ export default function EventDetailScreen() {
             <Ionicons name="share-outline" size={22} color="#FFF" />
           </TouchableOpacity>
           {isCreator && (
-            <TouchableOpacity style={[styles.iconButton, styles.deleteButton]} onPress={handleDelete}>
-              <Ionicons name="trash-outline" size={22} color="#FF4444" />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity 
+                style={[styles.iconButton, styles.editButton]} 
+                onPress={() => router.push(`/event/edit/${id}`)}
+              >
+                <Ionicons name="pencil" size={22} color="#D946EF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.iconButton, styles.deleteButton]} onPress={handleDelete}>
+                <Ionicons name="trash-outline" size={22} color="#FF4444" />
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
@@ -361,6 +369,9 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: 'rgba(255,68,68,0.2)',
+  },
+  editButton: {
+    backgroundColor: 'rgba(217,70,239,0.2)',
   },
   content: {
     padding: 20,
