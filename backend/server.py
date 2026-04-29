@@ -349,7 +349,7 @@ async def register(user_data: UserCreate):
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin, response: Response):
     """Login with email/password"""
-    user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
+    user = await db.users.find_one({"email": user_data.email.lower()}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=401, detail="Identifiants incorrects")
     
