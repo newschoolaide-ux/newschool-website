@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.newschoolaide.app",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Trouver des événements près de vous",
         "NSLocationAlwaysUsageDescription": "Trouver des événements près de vous",
