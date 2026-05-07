@@ -72,21 +72,39 @@ export default function SubscriptionScreen() {
     try {
       // Configure RevenueCat
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        console.log('[RevenueCat] Configuring with API Key:', REVENUECAT_API_KEY.substring(0, 10) + '...');
         Purchases.configure({ apiKey: REVENUECAT_API_KEY });
         setIsPurchasesConfigured(true);
         
+        // Identify user with backend ID
+        if (user?._id) {
+          console.log('[RevenueCat] Logging in user:', user._id);
+          await Purchases.logIn(user._id);
+        }
+        
         // Fetch available packages
+        console.log('[RevenueCat] Fetching offerings...');
         const offerings = await Purchases.getOfferings();
+        console.log('[RevenueCat] Offerings received:', JSON.stringify(offerings, null, 2));
+        
         if (offerings.current && offerings.current.availablePackages.length > 0) {
+          console.log('[RevenueCat] Found packages:', offerings.current.availablePackages.map(p => p.product.identifier));
           setPackages(offerings.current.availablePackages);
+        } else {
+          console.log('[RevenueCat] No packages available - check App Store Connect agreements and RevenueCat dashboard');
+          // Set a flag to show user-friendly message
+          setPackages([]);
         }
         
         // Check current subscription status
         const customerInfo = await Purchases.getCustomerInfo();
+        console.log('[RevenueCat] Customer info:', JSON.stringify(customerInfo.entitlements, null, 2));
         await syncSubscriptionWithBackend(customerInfo);
       }
-    } catch (error) {
-      console.log('RevenueCat not available (web or error):', error);
+    } catch (error: any) {
+      console.log('[RevenueCat] Error:', error.message || error);
+      console.log('[RevenueCat] Error code:', error.code);
+      console.log('[RevenueCat] Full error:', JSON.stringify(error, null, 2));
     }
   };
 
@@ -259,6 +277,16 @@ export default function SubscriptionScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Show message when in-app purchases are unavailable */}
+        {isPurchasesConfigured && packages.length === 0 && (
+          <View style={styles.unavailableBanner}>
+            <Ionicons name="alert-circle-outline" size={24} color="#FFB800" />
+            <Text style={styles.unavailableText}>
+              Achats in-app temporairement indisponibles. Veuillez réessayer plus tard.
+            </Text>
+          </View>
+        )}
 
         {tiers.map((tier) => {
           const isCurrentTier = tier.tier === user?.subscription_tier;
@@ -500,5 +528,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 18,
+  },
+  unavailableBanner: {
+    backgroundColor: '#2D2200',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#FFB800',
+  },
+  unavailableText: {
+    color: '#FFB800',
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
   },
 });

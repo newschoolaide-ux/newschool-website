@@ -5,11 +5,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as Location from 'expo-location';
 import {
   registerForPushNotificationsAsync,
   addNotificationListener,
   addNotificationResponseListener,
 } from '../services/notifications';
+
+const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 // Configure how notifications appear when app is in foreground
 Notifications.setNotificationHandler({
@@ -19,6 +22,36 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 });
+
+// Update user location for nearby notifications
+async function updateUserLocation(token: string) {
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Location permission denied');
+      return;
+    }
+
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+
+    await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/users/location`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      }),
+    });
+    console.log('User location updated for nearby notifications');
+  } catch (error) {
+    console.log('Error updating user location:', error);
+  }
+}
 
 function NotificationHandler() {
   const { token, isAuthenticated } = useAuth();
@@ -30,6 +63,9 @@ function NotificationHandler() {
     if (isAuthenticated && token) {
       // Register for push notifications
       registerForPushNotificationsAsync(token);
+
+      // Update user location for nearby event notifications
+      updateUserLocation(token);
 
       // Listen for incoming notifications while app is foregrounded
       notificationListener.current = addNotificationListener((notification) => {
@@ -45,6 +81,8 @@ function NotificationHandler() {
           router.push(`/event/${data.event_id}`);
         } else if (data?.type === 'message' && data?.event_id) {
           router.push(`/chat/${data.event_id}`);
+        } else if (data?.type === 'nearby' && data?.event_id) {
+          router.push(`/event/${data.event_id}`);
         }
       });
     }
