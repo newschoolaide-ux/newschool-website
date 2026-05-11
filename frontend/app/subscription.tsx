@@ -17,8 +17,9 @@ import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchase
 
 const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
-// RevenueCat API Key
-const REVENUECAT_API_KEY = 'appl_SLlNfoDZQjMZcaJDdbNGFILCOQY';
+// RevenueCat API Keys - iOS only for now (Android key needed: goog_XXX)
+const REVENUECAT_IOS_API_KEY = 'appl_SLlNfoDZQjMZcaJDdbNGFILCOQY';
+const REVENUECAT_ANDROID_API_KEY = ''; // TODO: Add Android key from RevenueCat dashboard
 
 interface Tier {
   tier: string;
@@ -70,41 +71,54 @@ export default function SubscriptionScreen() {
 
   const initializePurchases = async () => {
     try {
-      // Configure RevenueCat
-      if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        console.log('[RevenueCat] Configuring with API Key:', REVENUECAT_API_KEY.substring(0, 10) + '...');
-        Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+      // Configure RevenueCat - use platform-specific key
+      if (Platform.OS === 'ios') {
+        console.log('[RevenueCat] Configuring iOS with API Key:', REVENUECAT_IOS_API_KEY.substring(0, 10) + '...');
+        Purchases.configure({ apiKey: REVENUECAT_IOS_API_KEY });
         setIsPurchasesConfigured(true);
-        
-        // Identify user with backend ID
-        if (user?._id) {
-          console.log('[RevenueCat] Logging in user:', user._id);
-          await Purchases.logIn(user._id);
+      } else if (Platform.OS === 'android') {
+        if (!REVENUECAT_ANDROID_API_KEY) {
+          console.log('[RevenueCat] Android API key not configured - skipping initialization');
+          // Don't crash, just skip RevenueCat on Android for now
+          return;
         }
-        
-        // Fetch available packages
-        console.log('[RevenueCat] Fetching offerings...');
-        const offerings = await Purchases.getOfferings();
-        console.log('[RevenueCat] Offerings received:', JSON.stringify(offerings, null, 2));
-        
-        if (offerings.current && offerings.current.availablePackages.length > 0) {
-          console.log('[RevenueCat] Found packages:', offerings.current.availablePackages.map(p => p.product.identifier));
-          setPackages(offerings.current.availablePackages);
-        } else {
-          console.log('[RevenueCat] No packages available - check App Store Connect agreements and RevenueCat dashboard');
-          // Set a flag to show user-friendly message
-          setPackages([]);
-        }
-        
-        // Check current subscription status
-        const customerInfo = await Purchases.getCustomerInfo();
-        console.log('[RevenueCat] Customer info:', JSON.stringify(customerInfo.entitlements, null, 2));
-        await syncSubscriptionWithBackend(customerInfo);
+        console.log('[RevenueCat] Configuring Android with API Key:', REVENUECAT_ANDROID_API_KEY.substring(0, 10) + '...');
+        Purchases.configure({ apiKey: REVENUECAT_ANDROID_API_KEY });
+        setIsPurchasesConfigured(true);
+      } else {
+        // Web - skip RevenueCat
+        return;
       }
+        
+      // Identify user with backend ID
+      if (user?._id) {
+        console.log('[RevenueCat] Logging in user:', user._id);
+        await Purchases.logIn(user._id);
+      }
+      
+      // Fetch available packages
+      console.log('[RevenueCat] Fetching offerings...');
+      const offerings = await Purchases.getOfferings();
+      console.log('[RevenueCat] Offerings received:', JSON.stringify(offerings, null, 2));
+      
+      if (offerings.current && offerings.current.availablePackages.length > 0) {
+        console.log('[RevenueCat] Found packages:', offerings.current.availablePackages.map(p => p.product.identifier));
+        setPackages(offerings.current.availablePackages);
+      } else {
+        console.log('[RevenueCat] No packages available - check App Store Connect agreements and RevenueCat dashboard');
+        // Set a flag to show user-friendly message
+        setPackages([]);
+      }
+      
+      // Check current subscription status
+      const customerInfo = await Purchases.getCustomerInfo();
+      console.log('[RevenueCat] Customer info:', JSON.stringify(customerInfo.entitlements, null, 2));
+      await syncSubscriptionWithBackend(customerInfo);
     } catch (error: any) {
       console.log('[RevenueCat] Error:', error.message || error);
       console.log('[RevenueCat] Error code:', error.code);
       console.log('[RevenueCat] Full error:', JSON.stringify(error, null, 2));
+      // Don't crash the app - just skip RevenueCat functionality
     }
   };
 

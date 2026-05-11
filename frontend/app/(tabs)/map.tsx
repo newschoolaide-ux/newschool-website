@@ -37,16 +37,22 @@ const getThemeColor = (theme?: string) => {
   return theme ? (THEME_COLORS[theme] || THEME_COLORS['Autre']) : THEME_COLORS['Autre'];
 };
 
-// Only import MapView on native platforms
+// Only import MapView on native platforms - with error handling for Android
 let MapView: any = null;
 let Marker: any = null;
 let PROVIDER_GOOGLE: any = null;
+let mapsLoadError = false;
 
 if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Marker = Maps.Marker;
-  PROVIDER_GOOGLE = Maps.PROVIDER_GOOGLE;
+  try {
+    const Maps = require('react-native-maps');
+    MapView = Maps.default;
+    Marker = Maps.Marker;
+    PROVIDER_GOOGLE = Maps.PROVIDER_GOOGLE;
+  } catch (error) {
+    console.error('Failed to load react-native-maps:', error);
+    mapsLoadError = true;
+  }
 }
 
 export default function MapScreen() {
@@ -173,8 +179,71 @@ export default function MapScreen() {
     );
   }
 
-  // Native map view
-  if (!location) {
+  // Native map view - with fallback for map loading errors
+  if (!location || mapsLoadError || !MapView) {
+    // Show list view as fallback if map can't load
+    if (mapsLoadError || !MapView) {
+      return (
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+          <View style={styles.webHeader}>
+            <Text style={styles.webHeaderTitle}>Événements à proximité</Text>
+            <Text style={styles.webHeaderSubtitle}>
+              Liste des événements disponibles :
+            </Text>
+          </View>
+
+          <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#D946EF" style={{ marginTop: 40 }} />
+            ) : nearbyEvents.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="location-outline" size={48} color="#444" />
+                <Text style={styles.emptyText}>Aucun événement à proximité</Text>
+              </View>
+            ) : (
+              nearbyEvents.map((event) => (
+                <TouchableOpacity
+                  key={event.event_id}
+                  style={styles.webEventCard}
+                  onPress={() => router.push(`/event/${event.event_id}`)}
+                >
+                  <View style={styles.webEventIcon}>
+                    <Ionicons name="calendar" size={24} color="#D946EF" />
+                  </View>
+                  <View style={styles.webEventInfo}>
+                    <Text style={styles.webEventName}>{event.name}</Text>
+                    <View style={styles.webEventLocation}>
+                      <Ionicons name="location" size={14} color="#888" />
+                      <Text style={styles.webEventLocationText}>{event.location_name}</Text>
+                    </View>
+                    <View style={styles.webEventMeta}>
+                      <View style={styles.webEventParticipants}>
+                        <Ionicons name="people" size={14} color="#D946EF" />
+                        <Text style={styles.webEventParticipantsText}>
+                          {event.current_participants}/{event.max_participants}
+                        </Text>
+                      </View>
+                      {event.distance_km !== undefined && (
+                        <Text style={styles.webEventDistance}>{event.distance_km} km</Text>
+                      )}
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#666" />
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+
+          <TouchableOpacity
+            style={[styles.createButton, { bottom: insets.bottom + 20 }]}
+            onPress={() => router.push('/create-event')}
+          >
+            <Ionicons name="add" size={28} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color="#D946EF" />
@@ -187,7 +256,6 @@ export default function MapScreen() {
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={{
           latitude: location.latitude,
           longitude: location.longitude,
