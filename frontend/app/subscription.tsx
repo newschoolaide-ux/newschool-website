@@ -18,7 +18,7 @@ import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchase
 const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 // RevenueCat API Keys - iOS only for now (Android key needed: goog_XXX)
-const REVENUECAT_IOS_API_KEY = 'appl_SLlNfoDZQjMZcaJDdbNGFILCOQY';
+const REVENUECAT_IOS_API_KEY = 'appl_NZQclBGmQ0nXIjIXdvUAFhpmtbq';
 const REVENUECAT_ANDROID_API_KEY = ''; // TODO: Add Android key from RevenueCat dashboard
 
 interface Tier {
