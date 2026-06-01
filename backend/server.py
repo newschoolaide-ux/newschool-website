@@ -813,11 +813,23 @@ async def get_nearby_events(
     radius_km: float = 10,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get events near a specific location"""
+    """Get events near a specific location (excludes expired events)"""
+    now = datetime.now(timezone.utc)
     events = await db.events.find({"status": "active"}, {"_id": 0}).to_list(500)
     
     nearby_events = []
     for event in events:
+        # Skip expired events (events with start_time in the past)
+        start_time = event.get("start_time")
+        if start_time:
+            if isinstance(start_time, str):
+                start_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+            if start_time.tzinfo is None:
+                start_time = start_time.replace(tzinfo=timezone.utc)
+            # Skip if event started more than 2 hours ago
+            if start_time < now - timedelta(hours=2):
+                continue
+        
         distance = calculate_distance(latitude, longitude, event["latitude"], event["longitude"])
         if distance <= radius_km:
             event["distance_km"] = round(distance, 2)
