@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
   Linking,
 } from 'react-native';
+import { Text } from '../../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,7 +71,7 @@ export default function PrivacyScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Confidentialité</Text>
         <View style={styles.placeholder} />
@@ -134,7 +134,7 @@ export default function PrivacyScreen() {
             onPress={handleDeleteAccount}
             disabled={isDeleting}
           >
-            <Ionicons name="trash-outline" size={20} color="#FFF" />
+            <Ionicons name="trash-outline" size={20} color="#F5F3FA" />
             <Text style={styles.deleteButtonText}>
               {isDeleting ? 'Suppression...' : 'Supprimer mon compte'}
             </Text>
@@ -157,7 +157,7 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   header: {
     flexDirection: 'row',
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   backButton: {
     width: 44,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   placeholder: {
     width: 44,
@@ -198,13 +198,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionContent: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 16,
   },
   paragraph: {
     fontSize: 15,
-    color: '#CCC',
+    color: '#D6D2E0',
     lineHeight: 22,
   },
   bulletList: {
@@ -212,11 +212,11 @@ const styles = StyleSheet.create({
   },
   bulletItem: {
     fontSize: 14,
-    color: '#AAA',
+    color: '#C4BFD1',
     lineHeight: 24,
   },
   dangerSection: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 20,
     marginTop: 20,
@@ -241,17 +241,17 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   dangerWarning: {
     fontSize: 12,
-    color: '#888',
+    color: '#A39DB3',
     textAlign: 'center',
     marginTop: 12,
   },
   footerText: {
     fontSize: 12,
-    color: '#666',
+    color: '#8E889E',
     textAlign: 'center',
     marginTop: 32,
     lineHeight: 18,

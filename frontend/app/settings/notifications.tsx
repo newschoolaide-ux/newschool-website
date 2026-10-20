@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Switch,
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { Text } from '../../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -107,8 +107,8 @@ export default function NotificationsScreen() {
         value={value}
         onValueChange={onToggle}
         disabled={disabled}
-        trackColor={{ false: '#333', true: '#D946EF' }}
-        thumbColor={value ? '#FFF' : '#888'}
+        trackColor={{ false: '#2A2535', true: '#D946EF' }}
+        thumbColor={value ? '#F5F3FA' : '#A39DB3'}
       />
     </View>
   );
@@ -117,7 +117,7 @@ export default function NotificationsScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
         <View style={styles.placeholder} />
@@ -126,12 +126,12 @@ export default function NotificationsScreen() {
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         {!permissionGranted && (
           <TouchableOpacity style={styles.permissionBanner} onPress={requestPermissions}>
-            <Ionicons name="notifications-off" size={24} color="#FFF" />
+            <Ionicons name="notifications-off" size={24} color="#F5F3FA" />
             <View style={styles.permissionText}>
               <Text style={styles.permissionTitle}>Notifications désactivées</Text>
               <Text style={styles.permissionSubtitle}>Appuyez pour activer</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#FFF" />
+            <Ionicons name="chevron-forward" size={20} color="#F5F3FA" />
           </TouchableOpacity>
         )}
 
@@ -200,7 +200,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   header: {
     flexDirection: 'row',
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   backButton: {
     width: 44,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   placeholder: {
     width: 44,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   permissionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   permissionSubtitle: {
     fontSize: 13,
@@ -259,13 +259,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#888',
+    color: '#A39DB3',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 12,
   },
   card: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -285,24 +285,24 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   settingSubtitle: {
     fontSize: 13,
-    color: '#888',
+    color: '#A39DB3',
     marginTop: 2,
   },
   textDisabled: {
-    color: '#555',
+    color: '#6F6984',
   },
   separator: {
     height: 1,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: '#221E2D',
     marginLeft: 16,
   },
   footerText: {
     fontSize: 13,
-    color: '#666',
+    color: '#8E889E',
     textAlign: 'center',
     lineHeight: 18,
     marginTop: 8,

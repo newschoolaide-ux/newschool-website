@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   Image,
   Alert,
@@ -12,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -112,7 +111,7 @@ export default function EditProfileScreen() {
     >
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#FFF" />
+          <Ionicons name="close" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Modifier le profil</Text>
         <TouchableOpacity onPress={handleSave} disabled={isLoading}>
@@ -138,7 +137,7 @@ export default function EditProfileScreen() {
             </View>
           )}
           <View style={styles.cameraButton}>
-            <Ionicons name="camera" size={18} color="#FFF" />
+            <Ionicons name="camera" size={18} color="#F5F3FA" />
           </View>
         </TouchableOpacity>
 
@@ -147,7 +146,7 @@ export default function EditProfileScreen() {
           <TextInput
             style={styles.input}
             placeholder="Votre prénom"
-            placeholderTextColor="#666"
+            placeholderTextColor="#8E889E"
             value={firstName}
             onChangeText={setFirstName}
           />
@@ -158,7 +157,7 @@ export default function EditProfileScreen() {
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Parlez-nous de vous..."
-            placeholderTextColor="#666"
+            placeholderTextColor="#8E889E"
             value={bio}
             onChangeText={setBio}
             multiline
@@ -174,7 +173,7 @@ export default function EditProfileScreen() {
           <TextInput
             style={styles.input}
             placeholder="+33 6 12 34 56 78"
-            placeholderTextColor="#666"
+            placeholderTextColor="#8E889E"
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
@@ -206,11 +205,11 @@ export default function EditProfileScreen() {
 
         <View style={styles.infoSection}>
           <View style={styles.infoItem}>
-            <Ionicons name="mail-outline" size={20} color="#666" />
+            <Ionicons name="mail-outline" size={20} color="#8E889E" />
             <Text style={styles.infoText}>{user?.email}</Text>
           </View>
           <View style={styles.infoItem}>
-            <Ionicons name="calendar-outline" size={20} color="#666" />
+            <Ionicons name="calendar-outline" size={20} color="#8E889E" />
             <Text style={styles.infoText}>
               Membre depuis {user?.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : 'N/A'}
             </Text>
@@ -224,7 +223,7 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   header: {
     flexDirection: 'row',
@@ -233,7 +232,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   closeButton: {
     width: 44,
@@ -244,7 +243,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   saveButton: {
     color: '#D946EF',
@@ -275,7 +274,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   cameraButton: {
     position: 'absolute',
@@ -288,23 +287,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#0A0A0A',
+    borderColor: '#0C0A12',
   },
   inputGroup: {
     marginBottom: 24,
   },
   label: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 15,
     fontWeight: '500',
     marginBottom: 10,
   },
   input: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
   },
   textArea: {
@@ -312,7 +311,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
   charCount: {
-    color: '#666',
+    color: '#8E889E',
     fontSize: 12,
     textAlign: 'right',
     marginTop: 6,
@@ -323,7 +322,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   languageChip: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
@@ -332,14 +331,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#D946EF',
   },
   languageChipText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 14,
   },
   languageChipTextActive: {
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   infoSection: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
@@ -351,7 +350,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   infoText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 14,
   },
 });

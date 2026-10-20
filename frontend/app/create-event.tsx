@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -225,7 +224,7 @@ export default function CreateEventScreen() {
     >
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#FFF" />
+          <Ionicons name="close" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Créer une New School</Text>
         <View style={{ width: 44 }} />
@@ -241,7 +240,7 @@ export default function CreateEventScreen() {
             <Image source={{ uri: photo }} style={styles.photo} />
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Ionicons name="camera" size={40} color="#666" />
+              <Ionicons name="camera" size={40} color="#8E889E" />
               <Text style={styles.photoText}>Ajouter une photo</Text>
             </View>
           )}
@@ -252,7 +251,7 @@ export default function CreateEventScreen() {
           <TextInput
             style={styles.input}
             placeholder="Ex: Apéro international"
-            placeholderTextColor="#666"
+            placeholderTextColor="#8E889E"
             value={name}
             onChangeText={setName}
           />
@@ -263,7 +262,7 @@ export default function CreateEventScreen() {
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Décrivez votre événement..."
-            placeholderTextColor="#666"
+            placeholderTextColor="#8E889E"
             value={description}
             onChangeText={setDescription}
             multiline
@@ -278,7 +277,7 @@ export default function CreateEventScreen() {
             <TextInput
               style={[styles.input, styles.locationInput]}
               placeholder="Tapez une adresse (ex: Lyon 5e)"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={locationName}
               onChangeText={handleLocationChange}
             />
@@ -332,7 +331,7 @@ export default function CreateEventScreen() {
             <TextInput
               style={styles.input}
               placeholder="10"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={maxParticipants}
               onChangeText={setMaxParticipants}
               keyboardType="number-pad"
@@ -343,7 +342,7 @@ export default function CreateEventScreen() {
             <TextInput
               style={styles.input}
               placeholder="2"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={durationHours}
               onChangeText={setDurationHours}
               keyboardType="number-pad"
@@ -366,7 +365,7 @@ export default function CreateEventScreen() {
                 <Ionicons
                   name={option.icon as any}
                   size={24}
-                  color={selectedGender === option.id ? '#FFF' : '#888'}
+                  color={selectedGender === option.id ? '#F5F3FA' : '#A39DB3'}
                 />
                 <Text style={[
                   styles.genderOptionText,
@@ -453,7 +452,7 @@ export default function CreateEventScreen() {
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="#FFF" />
+            <ActivityIndicator color="#F5F3FA" />
           ) : (
             <Text style={styles.submitButtonText}>Créer la New School</Text>
           )}
@@ -466,7 +465,7 @@ export default function CreateEventScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   header: {
     flexDirection: 'row',
@@ -475,7 +474,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   closeButton: {
     width: 44,
@@ -486,7 +485,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   form: {
     flex: 1,
@@ -509,12 +508,12 @@ const styles = StyleSheet.create({
   photoPlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     alignItems: 'center',
     justifyContent: 'center',
   },
   photoText: {
-    color: '#666',
+    color: '#8E889E',
     marginTop: 8,
     fontSize: 14,
   },
@@ -522,17 +521,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 15,
     fontWeight: '500',
     marginBottom: 10,
   },
   input: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
   },
   textArea: {
@@ -549,7 +548,7 @@ const styles = StyleSheet.create({
   locationButton: {
     width: 52,
     height: 52,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -572,7 +571,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
@@ -583,17 +582,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#D946EF',
   },
   chipText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 14,
   },
   chipTextActive: {
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   footer: {
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#1A1A1A',
+    borderTopColor: '#16131F',
   },
   submitButton: {
     backgroundColor: '#D946EF',
@@ -606,7 +605,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   submitButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -616,7 +615,7 @@ const styles = StyleSheet.create({
   genderOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 14,
     gap: 12,
@@ -625,12 +624,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#D946EF',
   },
   genderOptionText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 15,
     fontWeight: '500',
   },
   genderOptionTextActive: {
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   ageContainer: {
     flexDirection: 'row',
@@ -638,7 +637,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ageChip: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
@@ -647,15 +646,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#D946EF',
   },
   ageChipText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 14,
     fontWeight: '500',
   },
   ageChipTextActive: {
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   hint: {
-    color: '#666',
+    color: '#8E889E',
     fontSize: 12,
     marginTop: 8,
     fontStyle: 'italic',
@@ -667,11 +666,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   searchingText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 12,
   },
   suggestionsContainer: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     marginTop: 8,
     overflow: 'hidden',
@@ -681,12 +680,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderBottomColor: '#221E2D',
     gap: 12,
   },
   suggestionText: {
     flex: 1,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 14,
   },
 });

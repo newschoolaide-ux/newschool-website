@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -11,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
 import { useRouter, Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -88,11 +87,11 @@ export default function LoginScreen() {
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="mail-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -101,11 +100,11 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Mot de passe"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -114,7 +113,7 @@ export default function LoginScreen() {
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color="#888"
+                color="#A39DB3"
               />
             </TouchableOpacity>
           </View>
@@ -125,7 +124,7 @@ export default function LoginScreen() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#FFF" />
+              <ActivityIndicator color="#F5F3FA" />
             ) : (
               <Text style={styles.loginButtonText}>Se connecter</Text>
             )}
@@ -144,7 +143,7 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-            <Ionicons name="logo-google" size={20} color="#FFF" />
+            <Ionicons name="logo-google" size={20} color="#F5F3FA" />
             <Text style={styles.googleButtonText}>Continuer avec Google</Text>
           </TouchableOpacity>
         </View>
@@ -165,7 +164,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   scrollContent: {
     flexGrow: 1,
@@ -184,7 +183,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: '#A39DB3',
     textAlign: 'center',
   },
   form: {
@@ -193,7 +192,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -204,7 +203,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
   },
   loginButton: {
@@ -216,7 +215,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   loginButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 18,
     fontWeight: '600',
   },
@@ -237,23 +236,23 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
   },
   dividerText: {
-    color: '#666',
+    color: '#8E889E',
     marginHorizontal: 16,
   },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
     borderRadius: 12,
     height: 56,
     gap: 12,
   },
   googleButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -265,7 +264,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 15,
   },
   registerLink: {

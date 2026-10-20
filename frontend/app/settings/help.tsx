@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   Linking,
   ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,7 +78,7 @@ export default function HelpScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Aide et support</Text>
         <View style={styles.placeholder} />
@@ -90,7 +89,7 @@ export default function HelpScreen() {
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.quickAction} onPress={contactEmail}>
             <View style={[styles.quickActionIcon, { backgroundColor: '#2196F3' }]}>
-              <Ionicons name="mail" size={24} color="#FFF" />
+              <Ionicons name="mail" size={24} color="#F5F3FA" />
             </View>
             <Text style={styles.quickActionText}>Email</Text>
           </TouchableOpacity>
@@ -100,7 +99,7 @@ export default function HelpScreen() {
             onPress={() => Linking.openURL('https://instagram.com/newschool_fr')}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: '#E1306C' }]}>
-              <Ionicons name="logo-instagram" size={24} color="#FFF" />
+              <Ionicons name="logo-instagram" size={24} color="#F5F3FA" />
             </View>
             <Text style={styles.quickActionText}>Instagram</Text>
           </TouchableOpacity>
@@ -110,7 +109,7 @@ export default function HelpScreen() {
             onPress={() => Linking.openURL('https://tiktok.com/@new.school.app')}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: '#000000' }]}>
-              <Ionicons name="musical-notes" size={24} color="#FFF" />
+              <Ionicons name="musical-notes" size={24} color="#F5F3FA" />
             </View>
             <Text style={styles.quickActionText}>TikTok</Text>
           </TouchableOpacity>
@@ -132,7 +131,7 @@ export default function HelpScreen() {
                 <Ionicons 
                   name={expandedIndex === index ? "chevron-up" : "chevron-down"} 
                   size={20} 
-                  color="#888" 
+                  color="#A39DB3" 
                 />
               </View>
               {expandedIndex === index && (
@@ -150,7 +149,7 @@ export default function HelpScreen() {
             <TextInput
               style={styles.textArea}
               placeholder="Écrivez votre message ici..."
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={message}
               onChangeText={setMessage}
               multiline
@@ -163,10 +162,10 @@ export default function HelpScreen() {
               disabled={isSending || !message.trim()}
             >
               {isSending ? (
-                <ActivityIndicator size="small" color="#FFF" />
+                <ActivityIndicator size="small" color="#F5F3FA" />
               ) : (
                 <>
-                  <Ionicons name="send" size={18} color="#FFF" />
+                  <Ionicons name="send" size={18} color="#F5F3FA" />
                   <Text style={styles.sendButtonText}>Envoyer</Text>
                 </>
               )}
@@ -187,7 +186,7 @@ export default function HelpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   header: {
     flexDirection: 'row',
@@ -196,7 +195,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   backButton: {
     width: 44,
@@ -207,7 +206,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   placeholder: {
     width: 44,
@@ -236,7 +235,7 @@ const styles = StyleSheet.create({
   },
   quickActionText: {
     fontSize: 13,
-    color: '#888',
+    color: '#A39DB3',
   },
   section: {
     marginBottom: 28,
@@ -248,7 +247,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   faqItem: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 16,
     marginBottom: 10,
@@ -261,31 +260,31 @@ const styles = StyleSheet.create({
   faqQuestion: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#FFF',
+    color: '#F5F3FA',
     flex: 1,
     paddingRight: 12,
   },
   faqAnswer: {
     fontSize: 14,
-    color: '#AAA',
+    color: '#C4BFD1',
     marginTop: 12,
     lineHeight: 22,
   },
   contactForm: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 16,
   },
   formLabel: {
     fontSize: 14,
-    color: '#888',
+    color: '#A39DB3',
     marginBottom: 12,
   },
   textArea: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
     borderRadius: 10,
     padding: 14,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 15,
     minHeight: 120,
     marginBottom: 16,
@@ -300,27 +299,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sendButtonDisabled: {
-    backgroundColor: '#444',
+    backgroundColor: '#3A3448',
   },
   sendButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   appInfo: {
     alignItems: 'center',
     marginTop: 20,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: '#1A1A1A',
+    borderTopColor: '#16131F',
   },
   appVersion: {
     fontSize: 14,
-    color: '#666',
+    color: '#8E889E',
   },
   appCopyright: {
     fontSize: 12,
-    color: '#444',
+    color: '#3A3448',
     marginTop: 4,
   },
 });

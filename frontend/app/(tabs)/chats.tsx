@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -9,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,7 +65,7 @@ export default function ChatsScreen() {
           <Image source={{ uri: chat.event_photo }} style={styles.avatarImage} />
         ) : (
           <View style={[styles.avatarImage, styles.avatarPlaceholder]}>
-            <Ionicons name="calendar" size={24} color="#666" />
+            <Ionicons name="calendar" size={24} color="#8E889E" />
           </View>
         )}
       </View>
@@ -91,7 +91,7 @@ export default function ChatsScreen() {
           )}
         </View>
         <View style={styles.participantsInfo}>
-          <Ionicons name="people-outline" size={12} color="#666" />
+          <Ionicons name="people-outline" size={12} color="#8E889E" />
           <Text style={styles.participantsCount}>{chat.participants_count} participants</Text>
         </View>
       </View>
@@ -121,7 +121,7 @@ export default function ChatsScreen() {
           </View>
         ) : chats.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubbles-outline" size={64} color="#444" />
+            <Ionicons name="chatbubbles-outline" size={64} color="#3A3448" />
             <Text style={styles.emptyTitle}>Aucune conversation</Text>
             <Text style={styles.emptySubtitle}>
               Rejoignez un événement pour commencer à discuter avec les participants !
@@ -144,18 +144,18 @@ export default function ChatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   chatsList: {
     flex: 1,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   chatAvatar: {
     marginRight: 14,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   avatarPlaceholder: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -196,13 +196,13 @@ const styles = StyleSheet.create({
   chatName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
     flex: 1,
     marginRight: 8,
   },
   chatTime: {
     fontSize: 12,
-    color: '#666',
+    color: '#8E889E',
   },
   chatPreview: {
     flexDirection: 'row',
@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 14,
-    color: '#888',
+    color: '#A39DB3',
     flex: 1,
   },
   noMessages: {
     fontSize: 14,
-    color: '#555',
+    color: '#6F6984',
     fontStyle: 'italic',
     flex: 1,
   },
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   unreadText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   },
   participantsCount: {
     fontSize: 12,
-    color: '#666',
+    color: '#8E889E',
   },
   loadingContainer: {
     flex: 1,
@@ -259,12 +259,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginTop: 16,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: '#A39DB3',
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   emptyButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
     fontWeight: '600',
   },

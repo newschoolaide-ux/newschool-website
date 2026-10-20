@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Image,
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { Text } from '../../components/ui/Text';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -81,7 +81,7 @@ export default function UserProfileScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <View style={styles.centered}>
           <Text style={styles.errorText}>{error || 'Utilisateur non trouvé'}</Text>
@@ -93,7 +93,7 @@ export default function UserProfileScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="#FFF" />
+        <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -110,7 +110,7 @@ export default function UserProfileScreen() {
             )}
             {profile.subscription_tier === 'ambassador' && (
               <View style={styles.badge}>
-                <Ionicons name="star" size={14} color="#FFF" />
+                <Ionicons name="star" size={14} color="#F5F3FA" />
               </View>
             )}
           </View>
@@ -161,7 +161,7 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   centered: {
     flex: 1,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   badge: {
     position: 'absolute',
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginTop: 16,
   },
   tier: {
@@ -232,20 +232,20 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   infoCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 16,
   },
   infoLabel: {
     fontSize: 12,
-    color: '#888',
+    color: '#A39DB3',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   infoValue: {
     fontSize: 16,
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   languagesContainer: {
     flexDirection: 'row',
@@ -253,17 +253,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   languageChip: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: '#221E2D',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   languageText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 14,
   },
   errorText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 16,
   },
 });

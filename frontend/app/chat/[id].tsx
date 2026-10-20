@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   FlatList,
   Image,
@@ -11,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -106,7 +105,7 @@ export default function ChatScreen() {
     >
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.headerContent}
@@ -116,7 +115,7 @@ export default function ChatScreen() {
             <Image source={{ uri: currentEvent.photo }} style={styles.headerAvatar} />
           ) : (
             <View style={[styles.headerAvatar, styles.headerAvatarPlaceholder]}>
-              <Ionicons name="calendar" size={18} color="#666" />
+              <Ionicons name="calendar" size={18} color="#8E889E" />
             </View>
           )}
           <View style={styles.headerInfo}>
@@ -132,7 +131,7 @@ export default function ChatScreen() {
           style={styles.infoButton}
           onPress={() => router.push(`/event/${id}`)}
         >
-          <Ionicons name="information-circle-outline" size={24} color="#FFF" />
+          <Ionicons name="information-circle-outline" size={24} color="#F5F3FA" />
         </TouchableOpacity>
       </View>
 
@@ -146,7 +145,7 @@ export default function ChatScreen() {
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubbles-outline" size={48} color="#444" />
+            <Ionicons name="chatbubbles-outline" size={48} color="#3A3448" />
             <Text style={styles.emptyText}>Aucun message</Text>
             <Text style={styles.emptySubtext}>Soyez le premier à envoyer un message !</Text>
           </View>
@@ -158,7 +157,7 @@ export default function ChatScreen() {
           <TextInput
             style={styles.input}
             placeholder="Votre message..."
-            placeholderTextColor="#666"
+            placeholderTextColor="#8E889E"
             value={newMessage}
             onChangeText={setNewMessage}
             multiline
@@ -170,9 +169,9 @@ export default function ChatScreen() {
             disabled={!newMessage.trim() || isSending}
           >
             {isSending ? (
-              <ActivityIndicator size="small" color="#FFF" />
+              <ActivityIndicator size="small" color="#F5F3FA" />
             ) : (
-              <Ionicons name="send" size={20} color="#FFF" />
+              <Ionicons name="send" size={20} color="#F5F3FA" />
             )}
           </TouchableOpacity>
         </View>
@@ -184,16 +183,16 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingBottom: 12,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   backButton: {
     width: 44,
@@ -213,7 +212,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   headerAvatarPlaceholder: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -223,11 +222,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#888',
+    color: '#A39DB3',
     marginTop: 2,
   },
   infoButton: {
@@ -260,18 +259,18 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   avatarPlaceholder: {
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 12,
     fontWeight: '600',
   },
   messageBubble: {
     maxWidth: '75%',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 16,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
@@ -290,15 +289,15 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 15,
-    color: '#FFF',
+    color: '#F5F3FA',
     lineHeight: 20,
   },
   ownMessageText: {
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   messageTime: {
     fontSize: 10,
-    color: '#666',
+    color: '#8E889E',
     marginTop: 4,
     alignSelf: 'flex-end',
   },
@@ -314,20 +313,20 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#888',
+    color: '#A39DB3',
     marginTop: 4,
   },
   inputContainer: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
     borderTopWidth: 1,
-    borderTopColor: '#1A1A1A',
+    borderTopColor: '#16131F',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -336,11 +335,11 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 15,
     maxHeight: 100,
   },
@@ -353,6 +352,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
   },
 });

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -11,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
 import { useRouter, Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,7 +72,7 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
 
         <View style={styles.header}>
@@ -83,33 +82,33 @@ export default function RegisterScreen() {
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="person-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Prénom *"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={firstName}
               onChangeText={setFirstName}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="person-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Nom de famille *"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={lastName}
               onChangeText={setLastName}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="mail-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email *"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -118,11 +117,11 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="call-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="call-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Téléphone (optionnel)"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -135,24 +134,24 @@ export default function RegisterScreen() {
               style={[styles.genderOption, gender === 'female' && styles.genderOptionActive]}
               onPress={() => setGender('female')}
             >
-              <Ionicons name="female" size={24} color={gender === 'female' ? '#FFF' : '#888'} />
+              <Ionicons name="female" size={24} color={gender === 'female' ? '#F5F3FA' : '#A39DB3'} />
               <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive]}>Femme</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.genderOption, gender === 'male' && styles.genderOptionActive]}
               onPress={() => setGender('male')}
             >
-              <Ionicons name="male" size={24} color={gender === 'male' ? '#FFF' : '#888'} />
+              <Ionicons name="male" size={24} color={gender === 'male' ? '#F5F3FA' : '#A39DB3'} />
               <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive]}>Homme</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="calendar-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="calendar-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Année de naissance (optionnel)"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={birthYear}
               onChangeText={setBirthYear}
               keyboardType="number-pad"
@@ -161,11 +160,11 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Mot de passe *"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -174,17 +173,17 @@ export default function RegisterScreen() {
               <Ionicons
                 name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                 size={20}
-                color="#888"
+                color="#A39DB3"
               />
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Confirmer le mot de passe *"
-              placeholderTextColor="#666"
+              placeholderTextColor="#8E889E"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showPassword}
@@ -197,7 +196,7 @@ export default function RegisterScreen() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#FFF" />
+              <ActivityIndicator color="#F5F3FA" />
             ) : (
               <Text style={styles.registerButtonText}>S'inscrire</Text>
             )}
@@ -224,7 +223,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   scrollContent: {
     flexGrow: 1,
@@ -244,12 +243,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: '#A39DB3',
   },
   form: {
     width: '100%',
@@ -257,7 +256,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -268,7 +267,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
   },
   registerButton: {
@@ -280,7 +279,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   registerButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 18,
     fontWeight: '600',
   },
@@ -292,7 +291,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 15,
   },
   loginLink: {
@@ -301,14 +300,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   terms: {
-    color: '#666',
+    color: '#8E889E',
     fontSize: 12,
     textAlign: 'center',
     marginTop: 24,
     lineHeight: 18,
   },
   sectionLabel: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 12,
@@ -324,7 +323,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingVertical: 14,
     gap: 8,
@@ -333,11 +332,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#D946EF',
   },
   genderText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 16,
     fontWeight: '500',
   },
   genderTextActive: {
-    color: '#FFF',
+    color: '#F5F3FA',
   },
 });

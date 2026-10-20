@@ -1,21 +1,22 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
-  TextInput,
   ActivityIndicator,
-  Image,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
-import { useEventStore, Event } from '../../stores/eventStore';
+import { useEventStore } from '../../stores/eventStore';
+import { colors, radius, themeColor, themeIcon, tabBarSpace } from '../../constants/theme';
+import { Avatar, Button, Chip } from '../../components/ui/kit';
+import { EventCard, EventRow, eventTiming } from '../../components/ui/EventCards';
 
 const THEMES = ['Gastronomie', 'Sport', 'Musique', 'Art & Culture', 'Plein air', 'Vie nocturne', 'Business', 'Échange linguistique', 'Voyage', 'Jeux', 'Autre'];
 
@@ -83,154 +84,131 @@ export default function HomeScreen() {
     loadEvents();
   };
 
-  const EventCard = ({ event }: { event: Event }) => (
-    <TouchableOpacity
-      style={styles.eventCard}
-      onPress={() => router.push(`/event/${event.event_id}`)}
-      activeOpacity={0.8}
-    >
-      {event.photo ? (
-        <Image source={{ uri: event.photo }} style={styles.eventImage} />
-      ) : (
-        <View style={[styles.eventImage, styles.eventImagePlaceholder]}>
-          <Image 
-            source={require('../../assets/images/logo-newschool.png')} 
-            style={styles.placeholderLogo}
-            resizeMode="cover"
-          />
-        </View>
-      )}
-      <View style={styles.eventContent}>
-        <View style={styles.eventHeader}>
-          <Text style={styles.eventName} numberOfLines={1}>{event.name}</Text>
-          {event.theme && (
-            <View style={styles.themeBadge}>
-              <Text style={styles.themeBadgeText}>{event.theme}</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.eventInfo}>
-          <Ionicons name="location" size={14} color="#888" />
-          <Text style={styles.eventLocation} numberOfLines={1}>{event.location_name}</Text>
-          {event.distance_km !== undefined && (
-            <Text style={styles.eventDistance}>{event.distance_km} km</Text>
-          )}
-        </View>
-        <View style={styles.eventFooter}>
-          <View style={styles.eventCreator}>
-            {event.creator_photo ? (
-              <Image source={{ uri: event.creator_photo }} style={styles.creatorPhoto} />
-            ) : (
-              <View style={[styles.creatorPhoto, styles.creatorPhotoPlaceholder]}>
-                <Text style={styles.creatorInitial}>{event.creator_name[0]}</Text>
-              </View>
-            )}
-            <Text style={styles.creatorName}>{event.creator_name}</Text>
-          </View>
-          <View style={styles.participantsBadge}>
-            <Ionicons name="people" size={14} color="#D946EF" />
-            <Text style={styles.participantsText}>
-              {event.current_participants}/{event.max_participants}
-            </Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+  const [city, setCity] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!location) return;
+    Location.reverseGeocodeAsync(location)
+      .then((res) => setCity(res?.[0]?.city || res?.[0]?.subregion || null))
+      .catch(() => {});
+  }, [location]);
+
+  const liveEvents = events.filter((e) => eventTiming(e).live);
+  const laterEvents = events.filter((e) => !eventTiming(e).live);
+  const hourNow = new Date().getHours();
+  const headline = hourNow < 12 ? 'On fait quoi\naujourd\'hui ?' : hourNow < 17 ? 'On sort quoi\ncet aprem ?' : 'On sort quoi\nce soir ?';
+  const openEvent = (id: string) => router.push(`/event/${id}`);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Bonjour, {user?.first_name || 'Voyageur'}</Text>
-          <Text style={styles.subtitle}>Découvrez les événements près de vous</Text>
+      <ScrollView
+        style={styles.eventsList}
+        contentContainerStyle={[styles.eventsListContent, { paddingBottom: tabBarSpace(insets.bottom) }]}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+        }
+      >
+        <View style={styles.topRow}>
+          <Pressable style={styles.locationPill} onPress={() => router.push('/(tabs)/map')} accessibilityRole="button">
+            <Ionicons name="location" size={17} color={colors.accent} />
+            <Text style={styles.locationText} numberOfLines={1}>{city ? `${city} · 50 km` : 'Autour de moi'}</Text>
+            <Ionicons name="chevron-down" size={14} color={colors.muted} />
+          </Pressable>
+          <Pressable onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button" accessibilityLabel="Mon profil">
+            <Avatar name={user?.first_name} photo={user?.photo} size={44} />
+          </Pressable>
         </View>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => router.push('/create-event')}
-        >
-          <Ionicons name="add" size={24} color="#FFF" />
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.searchContainer}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Salut {user?.first_name || 'toi'}</Text>
+          <Text style={styles.headline}>{headline}</Text>
+        </View>
+
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color="#666" />
+          <Ionicons name="search" size={19} color={colors.muted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Rechercher un événement..."
-            placeholderTextColor="#666"
+            placeholder="Un apéro, un foot, un concert…"
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={handleSearch}
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => { setSearchQuery(''); loadEvents(); }}>
-              <Ionicons name="close-circle" size={20} color="#666" />
-            </TouchableOpacity>
+            <Pressable onPress={() => { setSearchQuery(''); loadEvents(); }} accessibilityLabel="Effacer la recherche" hitSlop={8}>
+              <Ionicons name="close-circle" size={20} color={colors.muted} />
+            </Pressable>
           )}
         </View>
-      </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.themesContainer}
-        contentContainerStyle={styles.themesContent}
-      >
-        <TouchableOpacity
-          style={[styles.themeChip, !selectedTheme && styles.themeChipActive]}
-          onPress={() => setSelectedTheme(null)}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.themesContainer}
+          contentContainerStyle={styles.themesContent}
         >
-          <Text style={[styles.themeChipText, !selectedTheme && styles.themeChipTextActive]}>
-            Tous
-          </Text>
-        </TouchableOpacity>
-        {THEMES.map((theme) => (
-          <TouchableOpacity
-            key={theme}
-            style={[styles.themeChip, selectedTheme === theme && styles.themeChipActive]}
-            onPress={() => setSelectedTheme(selectedTheme === theme ? null : theme)}
-          >
-            <Text style={[styles.themeChipText, selectedTheme === theme && styles.themeChipTextActive]}>
-              {theme}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+          <Chip label="Tous" active={!selectedTheme} onPress={() => setSelectedTheme(null)} />
+          {THEMES.map((theme) => (
+            <Chip
+              key={theme}
+              label={theme}
+              icon={themeIcon(theme) as any}
+              color={themeColor(theme)}
+              active={selectedTheme === theme}
+              onPress={() => setSelectedTheme(selectedTheme === theme ? null : theme)}
+            />
+          ))}
+        </ScrollView>
 
-      <ScrollView
-        style={styles.eventsList}
-        contentContainerStyle={styles.eventsListContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#D946EF"
-          />
-        }
-      >
         {isLoading && events.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#D946EF" />
+            <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : events.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color="#444" />
-            <Text style={styles.emptyTitle}>Aucun événement</Text>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="sparkles" size={30} color={colors.accent} />
+            </View>
+            <Text style={styles.emptyTitle}>Rien pour l'instant par ici</Text>
             <Text style={styles.emptySubtitle}>
-              Soyez le premier à créer un événement dans votre région !
+              Lance la première School du coin : un café, un foot, une balade. Les gens autour de toi seront prévenus.
             </Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => router.push('/create-event')}
-            >
-              <Text style={styles.emptyButtonText}>Créer un événement</Text>
-            </TouchableOpacity>
+            <Button title="Créer une School" icon="add" onPress={() => router.push('/create-event')} style={{ marginTop: 22, alignSelf: 'stretch' }} />
           </View>
         ) : (
-          events.map((event) => <EventCard key={event.event_id} event={event} />)
+          <>
+            {liveEvents.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionTitleRow}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.sectionTitle}>En ce moment</Text>
+                  </View>
+                  <Pressable onPress={() => router.push('/(tabs)/map')} hitSlop={8}>
+                    <Text style={styles.sectionLink}>Voir sur la carte</Text>
+                  </Pressable>
+                </View>
+                {liveEvents.map((event) => (
+                  <EventCard key={event.event_id} event={event} onPress={() => openEvent(event.event_id)} />
+                ))}
+              </View>
+            )}
+            {laterEvents.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>À venir</Text>
+                </View>
+                {liveEvents.length === 0
+                  ? laterEvents.map((event) => (
+                      <EventCard key={event.event_id} event={event} onPress={() => openEvent(event.event_id)} />
+                    ))
+                  : laterEvents.map((event) => (
+                      <EventRow key={event.event_id} event={event} onPress={() => openEvent(event.event_id)} />
+                    ))}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </View>
@@ -240,226 +218,148 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: colors.bg,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+  },
+  locationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    height: 44,
+    paddingLeft: 12,
+    paddingRight: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    maxWidth: 240,
+  },
+  locationText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    flexShrink: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    marginTop: 22,
+    gap: 6,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.muted,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 4,
-  },
-  createButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#D946EF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 12,
+  headline: {
+    fontSize: 34,
+    lineHeight: 37,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: -0.6,
   },
   searchInputContainer: {
+    marginTop: 22,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    gap: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    height: 50,
+    gap: 10,
   },
   searchInput: {
     flex: 1,
-    color: '#FFF',
-    fontSize: 16,
+    color: colors.text,
+    fontSize: 15,
   },
   themesContainer: {
-    maxHeight: 48,
-    marginBottom: 12,
+    marginTop: 14,
+    marginHorizontal: -20,
+    flexGrow: 0,
   },
   themesContent: {
     paddingHorizontal: 20,
     gap: 8,
-  },
-  themeChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#1A1A1A',
-    marginRight: 8,
-  },
-  themeChipActive: {
-    backgroundColor: '#D946EF',
-  },
-  themeChipText: {
-    color: '#888',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  themeChipTextActive: {
-    color: '#FFF',
   },
   eventsList: {
     flex: 1,
   },
   eventsListContent: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
   },
-  eventCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
+  section: {
+    marginTop: 26,
   },
-  eventImage: {
-    width: '100%',
-    height: 150,
-  },
-  eventImagePlaceholder: {
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  placeholderLogo: {
-    width: '100%',
-    height: '100%',
-  },
-  eventContent: {
-    padding: 16,
-  },
-  eventHeader: {
+  sectionHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 14,
   },
-  eventName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFF',
-    flex: 1,
-    marginRight: 8,
-  },
-  themeBadge: {
-    backgroundColor: '#D946EF',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  themeBadgeText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  eventInfo: {
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 12,
+    gap: 9,
   },
-  eventLocation: {
-    color: '#888',
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.liveDot,
+    shadowColor: colors.liveDot,
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  sectionLink: {
     fontSize: 14,
-    flex: 1,
-  },
-  eventDistance: {
-    color: '#D946EF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  eventFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  eventCreator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  creatorPhoto: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-  },
-  creatorPhotoPlaceholder: {
-    backgroundColor: '#333',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  creatorInitial: {
-    color: '#FFF',
-    fontSize: 12,
     fontWeight: '600',
-  },
-  creatorName: {
-    color: '#AAA',
-    fontSize: 14,
-  },
-  participantsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255, 107, 53, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  participantsText: {
-    color: '#D946EF',
-    fontSize: 13,
-    fontWeight: '600',
+    color: '#E9A6F5',
   },
   loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
-  },
-  emptyContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 80,
-    paddingHorizontal: 40,
+  },
+  emptyContainer: {
+    marginTop: 30,
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.16)',
+  },
+  emptyIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#FFF',
+    fontWeight: '700',
+    color: colors.text,
     marginTop: 16,
+    textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.muted,
     textAlign: 'center',
     marginTop: 8,
-    lineHeight: 20,
-  },
-  emptyButton: {
-    backgroundColor: '#D946EF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 24,
-  },
-  emptyButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
+    lineHeight: 21,
   },
 });

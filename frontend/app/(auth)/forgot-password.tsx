@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -11,6 +9,8 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
+import type { TextInput as RNTextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,7 +31,7 @@ export default function ForgotPasswordScreen() {
   const insets = useSafeAreaInsets();
   
   // Refs for code inputs
-  const codeInputRefs = useRef<(TextInput | null)[]>([]);
+  const codeInputRefs = useRef<(RNTextInput | null)[]>([]);
 
   // Step 1: Send reset code to email
   const handleSendCode = async () => {
@@ -174,7 +174,7 @@ export default function ForgotPasswordScreen() {
             else router.back();
           }}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
 
         {/* Progress indicator */}
@@ -196,11 +196,11 @@ export default function ForgotPasswordScreen() {
           {step === 'email' && (
             <>
               <View style={styles.inputContainer}>
-                <Ionicons name="mail-outline" size={20} color="#888" style={styles.inputIcon} />
+                <Ionicons name="mail-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Email"
-                  placeholderTextColor="#666"
+                  placeholderTextColor="#8E889E"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -215,7 +215,7 @@ export default function ForgotPasswordScreen() {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#FFF" />
+                  <ActivityIndicator color="#F5F3FA" />
                 ) : (
                   <Text style={styles.submitButtonText}>Envoyer le code</Text>
                 )}
@@ -230,7 +230,7 @@ export default function ForgotPasswordScreen() {
                 {code.map((digit, index) => (
                   <TextInput
                     key={index}
-                    ref={(ref) => (codeInputRefs.current[index] = ref)}
+                    ref={(ref) => { codeInputRefs.current[index] = ref; }}
                     style={[styles.codeInput, digit && styles.codeInputFilled]}
                     value={digit}
                     onChangeText={(value) => handleCodeChange(value, index)}
@@ -248,7 +248,7 @@ export default function ForgotPasswordScreen() {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#FFF" />
+                  <ActivityIndicator color="#F5F3FA" />
                 ) : (
                   <Text style={styles.submitButtonText}>Vérifier le code</Text>
                 )}
@@ -264,11 +264,11 @@ export default function ForgotPasswordScreen() {
           {step === 'password' && (
             <>
               <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color="#888" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Nouveau mot de passe"
-                  placeholderTextColor="#666"
+                  placeholderTextColor="#8E889E"
                   value={newPassword}
                   onChangeText={setNewPassword}
                   secureTextEntry={!showPassword}
@@ -277,17 +277,17 @@ export default function ForgotPasswordScreen() {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color="#888"
+                    color="#A39DB3"
                   />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color="#888" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color="#A39DB3" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Confirmer le mot de passe"
-                  placeholderTextColor="#666"
+                  placeholderTextColor="#8E889E"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!showPassword}
@@ -300,7 +300,7 @@ export default function ForgotPasswordScreen() {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#FFF" />
+                  <ActivityIndicator color="#F5F3FA" />
                 ) : (
                   <Text style={styles.submitButtonText}>Réinitialiser</Text>
                 )}
@@ -316,7 +316,7 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   scrollContent: {
     flexGrow: 1,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
   },
   progressDotActive: {
     backgroundColor: '#D946EF',
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   progressLine: {
     width: 40,
     height: 3,
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
     marginHorizontal: 8,
   },
   progressLineActive: {
@@ -360,12 +360,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#888',
+    color: '#A39DB3',
     lineHeight: 22,
   },
   form: {
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
   },
   codeContainer: {
@@ -396,14 +396,14 @@ const styles = StyleSheet.create({
   codeInput: {
     width: 50,
     height: 60,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     textAlign: 'center',
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: '#2A2535',
   },
   codeInputFilled: {
     borderColor: '#D946EF',
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   submitButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 18,
     fontWeight: '600',
   },

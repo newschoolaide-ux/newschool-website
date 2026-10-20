@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -10,6 +9,7 @@ import {
   Alert,
   Share,
 } from 'react-native';
+import { Text } from '../../components/ui/Text';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -141,12 +141,12 @@ export default function EventDetailScreen() {
           style={[styles.backButton, { top: insets.top + 8 }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
 
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
-            <Ionicons name="share-outline" size={22} color="#FFF" />
+            <Ionicons name="share-outline" size={22} color="#F5F3FA" />
           </TouchableOpacity>
           {isCreator && (
             <>
@@ -278,7 +278,7 @@ export default function EventDetailScreen() {
         {isParticipant ? (
           <>
             <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
-              <Ionicons name="chatbubbles" size={20} color="#FFF" />
+              <Ionicons name="chatbubbles" size={20} color="#F5F3FA" />
               <Text style={styles.chatButtonText}>Chat</Text>
             </TouchableOpacity>
             {!isCreator && (
@@ -294,7 +294,7 @@ export default function EventDetailScreen() {
             disabled={currentEvent.is_full || isJoining}
           >
             {isJoining ? (
-              <ActivityIndicator color="#FFF" />
+              <ActivityIndicator color="#F5F3FA" />
             ) : (
               <Text style={styles.joinButtonText}>
                 {currentEvent.is_full ? 'Événement complet' : 'Rejoindre'}
@@ -310,7 +310,7 @@ export default function EventDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   coverPlaceholder: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   eventName: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
     flex: 1,
     marginRight: 12,
   },
@@ -396,12 +396,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   themeBadgeText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 13,
     fontWeight: '600',
   },
   infoSection: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   infoText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 15,
     flex: 1,
   },
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   fullBadgeText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginBottom: 12,
   },
   chatLink: {
@@ -448,14 +448,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   description: {
-    color: '#AAA',
+    color: '#C4BFD1',
     fontSize: 15,
     lineHeight: 24,
   },
   creatorCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 14,
     gap: 14,
@@ -471,12 +471,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   creatorInitial: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 20,
     fontWeight: '600',
   },
   creatorName: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -491,13 +491,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
   tagText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 14,
   },
   participantsList: {
@@ -516,17 +516,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   participantAvatarPlaceholder: {
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
     alignItems: 'center',
     justifyContent: 'center',
   },
   participantInitial: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 18,
     fontWeight: '600',
   },
   participantName: {
-    color: '#AAA',
+    color: '#C4BFD1',
     fontSize: 12,
     textAlign: 'center',
   },
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 10,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 10,
     padding: 2,
   },
@@ -546,9 +546,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
     borderTopWidth: 1,
-    borderTopColor: '#1A1A1A',
+    borderTopColor: '#16131F',
     gap: 12,
   },
   joinButton: {
@@ -560,10 +560,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   joinButtonDisabled: {
-    backgroundColor: '#444',
+    backgroundColor: '#3A3448',
   },
   joinButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chatButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 17,
     fontWeight: '600',
   },

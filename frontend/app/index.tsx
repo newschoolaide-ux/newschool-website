@@ -106,7 +106,7 @@ export default function Index() {
   if (showSplash) {
     return (
       <Animated.View style={[styles.splashContainer, { opacity: screenOpacity }]}>
-        <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
+        <StatusBar barStyle="light-content" backgroundColor="#0C0A12" />
         <View style={styles.contentContainer}>
           {/* Glow effect behind the logo */}
           <Animated.View 
@@ -143,7 +143,7 @@ export default function Index() {
   // Transition container
   return (
     <View style={styles.loadingContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
+      <StatusBar barStyle="light-content" backgroundColor="#0C0A12" />
     </View>
   );
 }
@@ -151,13 +151,13 @@ export default function Index() {
 const styles = StyleSheet.create({
   splashContainer: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   contentContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   glowEffect: {
     position: 'absolute',
@@ -192,6 +192,6 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
 });

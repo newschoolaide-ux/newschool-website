@@ -1,24 +1,33 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Image,
+  Pressable,
   RefreshControl,
   Alert,
+  Share,
 } from 'react-native';
+import { Text } from '../../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventStore } from '../../stores/eventStore';
+import { colors, radius, tabBarSpace } from '../../constants/theme';
+import { Avatar, Button, IconButton } from '../../components/ui/kit';
+import { EventRow } from '../../components/ui/EventCards';
+
+type Tab = 'created' | 'joined';
+
+const INVITE_MESSAGE =
+  'Je suis sur New School : des sorties spontanées avec des gens du coin (apéros, foot, concerts…). Gratuit, rejoins-moi !';
 
 export default function ProfileScreen() {
   const { user, token, logout, refreshUser } = useAuth();
   const { userCreatedEvents, userJoinedEvents, fetchUserCreatedEvents, fetchUserJoinedEvents } = useEventStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<Tab>('created');
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -40,193 +49,159 @@ export default function ProfileScreen() {
   }, [token]);
 
   const handleLogout = () => {
-    Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Déconnecter',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/login');
-          },
+    Alert.alert('Déconnexion', 'Tu veux vraiment te déconnecter ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Se déconnecter',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(auth)/login');
         },
-      ]
-    );
+      },
+    ]);
   };
+
+  const invite = () => {
+    Share.share({ message: INVITE_MESSAGE }).catch(() => {});
+  };
+
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    : null;
+  const list = tab === 'created' ? userCreatedEvents : userJoinedEvents;
+
+  const rows: Array<{ label: string; icon: keyof typeof Ionicons.glyphMap; color: string; onPress: () => void }> = [
+    { label: 'Inviter des amis', icon: 'gift-outline', color: colors.accent, onPress: invite },
+    { label: 'Mes Schools passées', icon: 'time-outline', color: colors.warning, onPress: () => router.push('/history') },
+    { label: 'Notifications', icon: 'notifications-outline', color: '#C084FC', onPress: () => router.push('/settings/notifications') },
+    { label: 'Confidentialité', icon: 'shield-checkmark-outline', color: colors.live, onPress: () => router.push('/settings/privacy') },
+    { label: 'Aide et support', icon: 'help-circle-outline', color: colors.info, onPress: () => router.push('/settings/help') },
+  ];
+  if (user?.role === 'admin') {
+    rows.push({ label: 'Administration', icon: 'key-outline', color: '#94A3B8', onPress: () => router.push('/admin') });
+  }
 
   return (
     <ScrollView
       style={[styles.container, { paddingTop: insets.top }]}
-      contentContainerStyle={styles.contentContainer}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor="#D946EF"
-        />
-      }
+      contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace(insets.bottom) }]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Profil</Text>
-          <TouchableOpacity onPress={() => router.push('/profile/edit')}>
-            <Ionicons name="settings-outline" size={24} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
-            {user?.photo ? (
-              <Image source={{ uri: user.photo }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarText}>{user?.first_name?.[0] || 'U'}</Text>
-              </View>
-            )}
-          </View>
-          <Text style={styles.userName}>{user?.first_name || 'Utilisateur'}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
-          {user?.bio && <Text style={styles.userBio}>{user.bio}</Text>}
-          {user?.languages && user.languages.length > 0 && (
-            <View style={styles.languagesContainer}>
-              {user.languages.map((lang, index) => (
-                <View key={index} style={styles.languageTag}>
-                  <Text style={styles.languageText}>{lang}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
+      <View style={styles.headerTop}>
+        <Text style={styles.headerTitle}>Profil</Text>
+        <IconButton icon="settings-outline" label="Modifier le profil" onPress={() => router.push('/profile/edit')} />
       </View>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{userCreatedEvents.length}</Text>
-          <Text style={styles.statLabel}>Événements créés</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{userJoinedEvents.length}</Text>
-          <Text style={styles.statLabel}>Événements rejoints</Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Mes événements</Text>
-        
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push('/create-event')}
-        >
-          <View style={styles.menuItemLeft}>
-            <View style={[styles.menuIcon, { backgroundColor: '#D946EF' }]}>
-              <Ionicons name="add" size={20} color="#FFF" />
-            </View>
-            <Text style={styles.menuItemText}>Créer un événement</Text>
+      <View style={styles.card}>
+        <View style={styles.identity}>
+          <View style={styles.avatarRing}>
+            <Avatar name={user?.first_name} photo={user?.photo} size={76} />
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push('/history')}
-        >
-          <View style={styles.menuItemLeft}>
-            <View style={[styles.menuIcon, { backgroundColor: '#FF9800' }]}>
-              <Ionicons name="time-outline" size={20} color="#FFF" />
-            </View>
-            <Text style={styles.menuItemText}>Mes Schools passées</Text>
+          <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+            <Text style={styles.userName} numberOfLines={1}>{user?.first_name || 'Utilisateur'}</Text>
+            <Text style={styles.userMeta} numberOfLines={1}>
+              {memberSince ? `Membre depuis ${memberSince}` : user?.email}
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
+        </View>
 
-        {userCreatedEvents.slice(0, 3).map((event) => (
-          <TouchableOpacity
-            key={event.event_id}
-            style={styles.menuItem}
-            onPress={() => router.push(`/event/${event.event_id}`)}
-          >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#333' }]}>
-                <Ionicons name="calendar" size={18} color="#FFF" />
+        {!!user?.bio && <Text style={styles.userBio}>{user.bio}</Text>}
+
+        {user?.languages && user.languages.length > 0 && (
+          <View style={styles.languages}>
+            {user.languages.map((lang, index) => (
+              <View key={index} style={styles.languageTag}>
+                <Text style={styles.languageText}>{lang}</Text>
               </View>
-              <View style={styles.eventInfo}>
-                <Text style={styles.menuItemText} numberOfLines={1}>{event.name}</Text>
-                <Text style={styles.eventParticipants}>
-                  {event.current_participants}/{event.max_participants} participants
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-        ))}
+            ))}
+          </View>
+        )}
+
+        <View style={styles.stats}>
+          <View style={styles.stat}>
+            <Text style={styles.statNumber}>{userCreatedEvents.length}</Text>
+            <Text style={styles.statLabel}>Schools créées</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNumber}>{userJoinedEvents.length}</Text>
+            <Text style={styles.statLabel}>Schools rejointes</Text>
+          </View>
+        </View>
+
+        <View style={styles.actions}>
+          <Button title="Modifier le profil" variant="light" compact style={{ flex: 1 }} onPress={() => router.push('/profile/edit')} />
+          <IconButton icon="share-outline" label="Inviter des amis" onPress={invite} style={{ backgroundColor: colors.surface2, borderWidth: 0 }} />
+        </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Paramètres</Text>
-        
-        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/edit')}>
-          <View style={styles.menuItemLeft}>
-            <View style={[styles.menuIcon, { backgroundColor: '#2196F3' }]}>
-              <Ionicons name="person-outline" size={18} color="#FFF" />
-            </View>
-            <Text style={styles.menuItemText}>Modifier le profil</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.segment}>
+          {([
+            ['created', 'Créées'],
+            ['joined', 'Rejointes'],
+          ] as Array<[Tab, string]>).map(([id, label]) => (
+            <Pressable
+              key={id}
+              onPress={() => setTab(id)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: tab === id }}
+              style={[styles.segmentItem, tab === id && styles.segmentItemActive]}
+            >
+              <Text style={[styles.segmentText, tab === id && styles.segmentTextActive]}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings/notifications')}>
-          <View style={styles.menuItemLeft}>
-            <View style={[styles.menuIcon, { backgroundColor: '#9C27B0' }]}>
-              <Ionicons name="notifications-outline" size={18} color="#FFF" />
-            </View>
-            <Text style={styles.menuItemText}>Notifications</Text>
+        {list.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>
+              {tab === 'created' ? 'Aucune School créée' : 'Aucune School rejointe'}
+            </Text>
+            <Text style={styles.emptyText}>
+              {tab === 'created'
+                ? 'Lance une sortie en 30 secondes : les gens autour de toi seront prévenus.'
+                : 'Les Schools que tu rejoins apparaîtront ici.'}
+            </Text>
+            <Button
+              title={tab === 'created' ? 'Créer une School' : 'Trouver une School'}
+              compact
+              onPress={() => router.push(tab === 'created' ? '/create-event' : '/(tabs)/home')}
+              style={{ marginTop: 6 }}
+            />
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings/privacy')}>
-          <View style={styles.menuItemLeft}>
-            <View style={[styles.menuIcon, { backgroundColor: '#607D8B' }]}>
-              <Ionicons name="shield-outline" size={18} color="#FFF" />
-            </View>
-            <Text style={styles.menuItemText}>Confidentialité</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings/help')}>
-          <View style={styles.menuItemLeft}>
-            <View style={[styles.menuIcon, { backgroundColor: '#00BCD4' }]}>
-              <Ionicons name="help-circle-outline" size={18} color="#FFF" />
-            </View>
-            <Text style={styles.menuItemText}>Aide et support</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
-
-        {user?.role === 'admin' && (
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/admin')}>
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#D946EF' }]}>
-                <Ionicons name="shield-checkmark" size={18} color="#FFF" />
-              </View>
-              <Text style={styles.menuItemText}>Administration</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
+        ) : (
+          list.slice(0, 4).map((event) => (
+            <EventRow key={event.event_id} event={event} onPress={() => router.push(`/event/${event.event_id}`)} />
+          ))
         )}
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color="#FF4444" />
-        <Text style={styles.logoutText}>Déconnexion</Text>
-      </TouchableOpacity>
+      <View style={styles.menu}>
+        {rows.map((row, i) => (
+          <Pressable
+            key={row.label}
+            onPress={row.onPress}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.menuItem, i > 0 && styles.menuDivider, pressed && { backgroundColor: colors.surface2 }]}
+          >
+            <View style={styles.menuLeft}>
+              <View style={[styles.menuIcon, { backgroundColor: `${row.color}22` }]}>
+                <Ionicons name={row.icon} size={18} color={row.color} />
+              </View>
+              <Text style={styles.menuText}>{row.label}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.faint} />
+          </Pressable>
+        ))}
+      </View>
 
-      <Text style={styles.version}>New School v1.0.0</Text>
+      <Pressable style={styles.logout} onPress={handleLogout} accessibilityRole="button">
+        <Ionicons name="log-out-outline" size={19} color={colors.danger} />
+        <Text style={styles.logoutText}>Se déconnecter</Text>
+      </Pressable>
+
+      <Text style={styles.version}>New School · 100 % gratuit</Text>
     </ScrollView>
   );
 }
@@ -234,217 +209,203 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: colors.bg,
   },
-  contentContainer: {
-    paddingBottom: 40,
-  },
-  header: {
+  content: {
     paddingHorizontal: 20,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 12,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: -0.5,
   },
-  profileCard: {
+  card: {
+    marginTop: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: 20,
+    gap: 16,
+  },
+  identity: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 24,
+    gap: 16,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
+  avatarRing: {
+    padding: 3,
     borderRadius: 50,
-  },
-  avatarPlaceholder: {
-    backgroundColor: '#D946EF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  tierBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: -4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  tierBadgeText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '600',
+    borderWidth: 2,
+    borderColor: colors.accent,
   },
   userName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 4,
+    fontWeight: '800',
+    color: colors.text,
   },
-  userEmail: {
+  userMeta: {
     fontSize: 14,
-    color: '#888',
-    marginBottom: 8,
+    color: colors.muted,
   },
   userBio: {
-    fontSize: 14,
-    color: '#AAA',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.textSecondary,
   },
-  languagesContainer: {
+  languages: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 12,
     gap: 8,
   },
   languageTag: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: colors.surface2,
+    borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
   },
   languageText: {
-    color: '#FFF',
-    fontSize: 12,
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
   },
-  statsContainer: {
+  stats: {
     flexDirection: 'row',
-    backgroundColor: '#1A1A1A',
-    marginHorizontal: 20,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    gap: 10,
   },
-  statItem: {
+  stat: {
     flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
   statNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#D946EF',
+    fontSize: 26,
+    fontWeight: '800',
+    color: colors.text,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 4,
+    fontSize: 13,
+    color: colors.muted,
+    marginTop: 2,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
   },
   section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    marginTop: 22,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFF',
-    marginBottom: 12,
-  },
-  subscriptionCard: {
+  segment: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    padding: 4,
+    marginBottom: 14,
   },
-  subscriptionInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  subscriptionIcon: {
-    width: 40,
+  segmentItem: {
+    flex: 1,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  subscriptionName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
+  segmentItemActive: {
+    backgroundColor: colors.surface3,
   },
-  subscriptionDesc: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
+  segmentText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.muted,
+  },
+  segmentTextActive: {
+    color: colors.text,
+  },
+  empty: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: radius.lg,
+    padding: 20,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  emptyText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.muted,
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  menu: {
+    marginTop: 22,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    overflow: 'hidden',
   },
   menuItem: {
+    height: 58,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
   },
-  menuItemLeft: {
+  menuDivider: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+  },
+  menuLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 12,
   },
   menuIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuItemText: {
+  menuText: {
     fontSize: 15,
-    color: '#FFF',
-    flex: 1,
+    fontWeight: '600',
+    color: colors.text,
   },
-  eventInfo: {
-    flex: 1,
-  },
-  eventParticipants: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
-  },
-  logoutButton: {
+  logout: {
+    marginTop: 18,
+    height: 52,
+    borderRadius: radius.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 20,
-    marginTop: 12,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 68, 68, 0.1)',
     gap: 8,
+    backgroundColor: 'rgba(248,113,113,0.08)',
   },
   logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF4444',
+    color: colors.danger,
+    fontSize: 15,
+    fontWeight: '700',
   },
   version: {
     textAlign: 'center',
-    color: '#444',
+    color: colors.faint,
     fontSize: 12,
-    marginTop: 24,
+    marginTop: 16,
   },
 });

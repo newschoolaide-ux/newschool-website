@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   ActivityIndicator,
   RefreshControl,
   Modal,
   Image,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -249,7 +248,7 @@ export default function AdminDashboard() {
       <View style={styles.subscriptionsCard}>
         <View style={styles.subscriptionRow}>
           <View style={styles.subscriptionInfo}>
-            <View style={[styles.subscriptionDot, { backgroundColor: '#666' }]} />
+            <View style={[styles.subscriptionDot, { backgroundColor: '#8E889E' }]} />
             <Text style={styles.subscriptionLabel}>Gratuit</Text>
           </View>
           <Text style={styles.subscriptionCount}>{stats?.subscriptions?.free || 0}</Text>
@@ -296,11 +295,11 @@ export default function AdminDashboard() {
   const renderUsers = () => (
     <View style={styles.usersContainer}>
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" />
+        <Ionicons name="search" size={20} color="#8E889E" />
         <TextInput
           style={styles.searchInput}
           placeholder="Rechercher un utilisateur..."
-          placeholderTextColor="#666"
+          placeholderTextColor="#8E889E"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -330,7 +329,7 @@ export default function AdminDashboard() {
             </View>
             <Text style={styles.userEmail}>{user.email}</Text>
             <View style={styles.userMeta}>
-              <Text style={[styles.userTier, { color: user.subscription_tier === 'ambassador' ? '#FFD700' : user.subscription_tier === 'standard' ? '#D946EF' : '#666' }]}>
+              <Text style={[styles.userTier, { color: user.subscription_tier === 'ambassador' ? '#FFD700' : user.subscription_tier === 'standard' ? '#D946EF' : '#8E889E' }]}>
                 {user.subscription_tier === 'ambassador' ? 'Ambassadeur' : user.subscription_tier === 'standard' ? 'Standard' : 'Gratuit'}
               </Text>
               {(user.report_count || 0) > 0 && (
@@ -345,7 +344,7 @@ export default function AdminDashboard() {
             style={[styles.banButton, user.is_banned && styles.unbanButton]}
             onPress={() => user.is_banned ? handleUnbanUser(user.user_id) : handleBanUser(user.user_id, user.first_name)}
           >
-            <Ionicons name={user.is_banned ? 'checkmark' : 'ban'} size={18} color="#FFF" />
+            <Ionicons name={user.is_banned ? 'checkmark' : 'ban'} size={18} color="#F5F3FA" />
           </TouchableOpacity>
         </TouchableOpacity>
       ))}
@@ -404,11 +403,11 @@ export default function AdminDashboard() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dashboard Admin</Text>
         <TouchableOpacity onPress={() => loadData()}>
-          <Ionicons name="refresh" size={24} color="#FFF" />
+          <Ionicons name="refresh" size={24} color="#F5F3FA" />
         </TouchableOpacity>
       </View>
 
@@ -417,21 +416,21 @@ export default function AdminDashboard() {
           style={[styles.tab, activeTab === 'stats' && styles.tabActive]}
           onPress={() => setActiveTab('stats')}
         >
-          <Ionicons name="stats-chart" size={20} color={activeTab === 'stats' ? '#D946EF' : '#666'} />
+          <Ionicons name="stats-chart" size={20} color={activeTab === 'stats' ? '#D946EF' : '#8E889E'} />
           <Text style={[styles.tabText, activeTab === 'stats' && styles.tabTextActive]}>Stats</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'users' && styles.tabActive]}
           onPress={() => setActiveTab('users')}
         >
-          <Ionicons name="people" size={20} color={activeTab === 'users' ? '#D946EF' : '#666'} />
+          <Ionicons name="people" size={20} color={activeTab === 'users' ? '#D946EF' : '#8E889E'} />
           <Text style={[styles.tabText, activeTab === 'users' && styles.tabTextActive]}>Utilisateurs</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'reports' && styles.tabActive]}
           onPress={() => setActiveTab('reports')}
         >
-          <Ionicons name="flag" size={20} color={activeTab === 'reports' ? '#D946EF' : '#666'} />
+          <Ionicons name="flag" size={20} color={activeTab === 'reports' ? '#D946EF' : '#8E889E'} />
           <Text style={[styles.tabText, activeTab === 'reports' && styles.tabTextActive]}>Signalements</Text>
           {(stats?.reports_pending || 0) > 0 && (
             <View style={styles.tabBadge}>
@@ -465,7 +464,7 @@ export default function AdminDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   loginContainer: {
     alignItems: 'center',
@@ -484,12 +483,12 @@ const styles = StyleSheet.create({
   loginTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginTop: 20,
   },
   loginSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: '#A39DB3',
     marginTop: 8,
   },
   loginForm: {
@@ -497,11 +496,11 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   passwordInput: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
     marginBottom: 16,
   },
@@ -513,7 +512,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loginButtonText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -524,7 +523,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   backButton: {
     width: 44,
@@ -535,12 +534,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   tabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   tab: {
     flex: 1,
@@ -556,7 +555,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    color: '#666',
+    color: '#8E889E',
   },
   tabTextActive: {
     color: '#D946EF',
@@ -572,7 +571,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   tabBadgeText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -580,7 +579,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loadingText: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 16,
     marginTop: 16,
   },
@@ -603,23 +602,23 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginTop: 8,
   },
   statLabel: {
     fontSize: 13,
-    color: '#AAA',
+    color: '#C4BFD1',
     marginTop: 4,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginTop: 24,
     marginBottom: 12,
   },
   subscriptionsCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 16,
     padding: 16,
   },
@@ -641,15 +640,15 @@ const styles = StyleSheet.create({
   },
   subscriptionLabel: {
     fontSize: 15,
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   subscriptionCount: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   revenueCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -662,7 +661,7 @@ const styles = StyleSheet.create({
   },
   revenueNote: {
     fontSize: 12,
-    color: '#888',
+    color: '#A39DB3',
     marginTop: 8,
   },
   alertCard: {
@@ -684,7 +683,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     paddingHorizontal: 14,
     marginBottom: 16,
@@ -692,14 +691,14 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 16,
     paddingVertical: 12,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -726,7 +725,7 @@ const styles = StyleSheet.create({
   userAvatarText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   userInfo: {
     flex: 1,
@@ -739,7 +738,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   bannedBadge: {
     backgroundColor: '#FF6B6B',
@@ -750,11 +749,11 @@ const styles = StyleSheet.create({
   bannedBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   userEmail: {
     fontSize: 13,
-    color: '#888',
+    color: '#A39DB3',
     marginTop: 2,
   },
   userMeta: {
@@ -801,16 +800,16 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginTop: 16,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: '#A39DB3',
     marginTop: 4,
   },
   reportCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -830,21 +829,21 @@ const styles = StyleSheet.create({
   reportTypeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   reportDate: {
     fontSize: 12,
-    color: '#888',
+    color: '#A39DB3',
   },
   reportReason: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginBottom: 8,
   },
   reportDescription: {
     fontSize: 14,
-    color: '#AAA',
+    color: '#C4BFD1',
     marginBottom: 12,
   },
   reportActions: {
@@ -854,7 +853,7 @@ const styles = StyleSheet.create({
   },
   dismissButton: {
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
@@ -862,7 +861,7 @@ const styles = StyleSheet.create({
   dismissButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   banReportButton: {
     flex: 1,
@@ -874,6 +873,6 @@ const styles = StyleSheet.create({
   banReportButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
 });

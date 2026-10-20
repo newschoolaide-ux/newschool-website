@@ -1,43 +1,53 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Dimensions,
   Platform,
   ScrollView,
+  FlatList,
+  Keyboard,
 } from 'react-native';
+import { Text, TextInput } from '../../components/ui/Text';
 import { useRouter, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventStore, Event } from '../../stores/eventStore';
+import { colors, radius, themeColor, themeIcon, themeTint, tabBarSpace } from '../../constants/theme';
+import { Chip } from '../../components/ui/kit';
+import { EventRow, eventTiming, formatDistance } from '../../components/ui/EventCards';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = Math.min(width - 72, 320);
+const CARD_GAP = 12;
 
-// Colors by theme for map markers
-const THEME_COLORS: { [key: string]: string } = {
-  'Sport': '#EF4444',           // Red
-  'Musique': '#3B82F6',         // Blue
-  'Gastronomie': '#F59E0B',     // Orange
-  'Art & Culture': '#8B5CF6',   // Purple
-  'Plein air': '#10B981',       // Green
-  'Vie nocturne': '#EC4899',    // Pink
-  'Business': '#6B7280',        // Gray
-  'Échange linguistique': '#06B6D4', // Cyan
-  'Voyage': '#F97316',          // Dark Orange
-  'Jeux': '#84CC16',            // Lime
-  'Autre': '#D946EF',           // Default Pink
-};
+// Style de nuit de la carte Google (Android) : fond sombre teinté violet, eau bleu nuit.
+const MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#141722' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8C86A0' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0F1119' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#C9C2DE' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.park', stylers: [{ visibility: 'on' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#132219' }] },
+  { featureType: 'poi.park', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#1A1E2B' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#232838' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0F1119' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#2E3448' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3A3352' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#C9C2DE' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#1B2D4D' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4E6A99' }] },
+];
 
-const getThemeColor = (theme?: string) => {
-  return theme ? (THEME_COLORS[theme] || THEME_COLORS['Autre']) : THEME_COLORS['Autre'];
-};
-
-// Only import MapView on native platforms - with error handling for Android
+// La carte n'existe que sur téléphone.
 let MapView: any = null;
 let Marker: any = null;
 let PROVIDER_GOOGLE: any = null;
@@ -55,26 +65,112 @@ if (Platform.OS !== 'web') {
   }
 }
 
+type TimeFilter = 'all' | 'now' | 'later';
+
+function EventPin({ event, selected }: { event: Event; selected: boolean }) {
+  const color = themeColor(event.theme);
+  const live = eventTiming(event).live;
+  const size = selected ? 52 : 40;
+  return (
+    <View style={styles.pinWrap}>
+      <View style={{ width: size + 24, height: size + 24, alignItems: 'center', justifyContent: 'center' }}>
+        {live && (
+          <View
+            style={{
+              position: 'absolute',
+              width: size + 22,
+              height: size + 22,
+              borderRadius: (size + 22) / 2,
+              backgroundColor: color,
+              opacity: 0.22,
+            }}
+          />
+        )}
+        <View
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: color,
+            borderWidth: 3,
+            borderColor: selected ? colors.text : colors.mapBg,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name={themeIcon(event.theme) as any} size={selected ? 24 : 18} color="#120A16" />
+        </View>
+        <View style={[styles.pinCount, { borderColor: color, left: (size + 24) / 2 + size / 2 - 16, top: 6 }]}>
+          <Text style={styles.pinCountText}>{event.current_participants}</Text>
+        </View>
+      </View>
+      <View style={[styles.pinTail, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
+function MapCard({ event, onPress }: { event: Event; onPress: () => void }) {
+  const timing = eventTiming(event);
+  const distance = formatDistance(event.distance_km);
+  return (
+    <Pressable onPress={onPress} style={styles.card} accessibilityRole="button" accessibilityLabel={event.name}>
+      <View style={[styles.cardThumb, { backgroundColor: themeTint(event.theme) }]}>
+        <Ionicons name={themeIcon(event.theme) as any} size={32} color={themeColor(event.theme)} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+        {!!timing.label && (
+          <Text style={[styles.cardStatus, { color: timing.live ? colors.live : '#93C5FD' }]} numberOfLines={1}>
+            {timing.label}
+          </Text>
+        )}
+        <Text style={styles.cardTitle} numberOfLines={2}>{event.name}</Text>
+        <Text style={styles.cardMeta} numberOfLines={1}>
+          {[event.location_name, distance, `${event.current_participants}/${event.max_participants}`].filter(Boolean).join(' · ')}
+        </Text>
+      </View>
+      <View style={styles.cardGo}>
+        <Ionicons name="arrow-forward" size={20} color={colors.onAccent} />
+      </View>
+    </Pressable>
+  );
+}
+
 export default function MapScreen() {
   const { token } = useAuth();
   const { nearbyEvents, isLoading, fetchNearbyEvents } = useEventStore();
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+  const [cityQuery, setCityQuery] = useState('');
+  const [trackPins, setTrackPins] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const lastRefresh = useRef<number>(0);
+  const mapRef = useRef<any>(null);
+  const listRef = useRef<FlatList<Event>>(null);
+
+  const events = useMemo(() => {
+    if (timeFilter === 'all') return nearbyEvents;
+    return nearbyEvents.filter((e) => (timeFilter === 'now' ? eventTiming(e).live : !eventTiming(e).live));
+  }, [nearbyEvents, timeFilter]);
+  const liveCount = useMemo(() => nearbyEvents.filter((e) => eventTiming(e).live).length, [nearbyEvents]);
 
   useEffect(() => {
     getLocation();
   }, []);
 
-  // Refresh when navigating back to map tab
+  // Les repères personnalisés doivent être redessinés quand la sélection change.
+  useEffect(() => {
+    setTrackPins(true);
+    const t = setTimeout(() => setTrackPins(false), 700);
+    return () => clearTimeout(t);
+  }, [selectedId, events]);
+
   useEffect(() => {
     if (pathname === '/map' && token && location) {
       const now = Date.now();
-      // Only refresh if more than 2 seconds since last refresh (avoid double refresh)
       if (now - lastRefresh.current > 2000) {
         lastRefresh.current = now;
         fetchNearbyEvents(token, location.latitude, location.longitude, 200);
@@ -84,7 +180,6 @@ export default function MapScreen() {
 
   useEffect(() => {
     if (token && location) {
-      // Fetch events in a larger radius (200km) to see more events
       fetchNearbyEvents(token, location.latitude, location.longitude, 200);
     }
   }, [token, location]);
@@ -102,12 +197,8 @@ export default function MapScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({});
-        setLocation({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
+        setLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
       } else {
-        // Default to Paris if permission denied
         setLocation({ latitude: 48.8566, longitude: 2.3522 });
       }
     } catch (error) {
@@ -116,138 +207,78 @@ export default function MapScreen() {
     }
   };
 
-  // Web fallback - show list view
-  if (Platform.OS === 'web') {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.webHeader}>
-          <Text style={styles.webHeaderTitle}>Carte des événements</Text>
-          <Text style={styles.webHeaderSubtitle}>
-            La carte est disponible uniquement sur mobile. Voici la liste des événements à proximité :
-          </Text>
-        </View>
+  const recenter = () => {
+    if (!location || !mapRef.current) return;
+    mapRef.current.animateToRegion({ ...location, latitudeDelta: 0.08, longitudeDelta: 0.08 }, 500);
+  };
 
-        <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
-          {isLoading ? (
-            <ActivityIndicator size="large" color="#D946EF" style={{ marginTop: 40 }} />
-          ) : nearbyEvents.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="location-outline" size={48} color="#444" />
-              <Text style={styles.emptyText}>Aucun événement à proximité</Text>
-            </View>
-          ) : (
-            nearbyEvents.map((event) => (
-              <TouchableOpacity
-                key={event.event_id}
-                style={styles.webEventCard}
-                onPress={() => router.push(`/event/${event.event_id}`)}
-              >
-                <View style={styles.webEventIcon}>
-                  <Ionicons name="calendar" size={24} color="#D946EF" />
-                </View>
-                <View style={styles.webEventInfo}>
-                  <Text style={styles.webEventName}>{event.name}</Text>
-                  <View style={styles.webEventLocation}>
-                    <Ionicons name="location" size={14} color="#888" />
-                    <Text style={styles.webEventLocationText}>{event.location_name}</Text>
-                  </View>
-                  <View style={styles.webEventMeta}>
-                    <View style={styles.webEventParticipants}>
-                      <Ionicons name="people" size={14} color="#D946EF" />
-                      <Text style={styles.webEventParticipantsText}>
-                        {event.current_participants}/{event.max_participants}
-                      </Text>
-                    </View>
-                    {event.distance_km !== undefined && (
-                      <Text style={styles.webEventDistance}>{event.distance_km} km</Text>
-                    )}
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#666" />
-              </TouchableOpacity>
-            ))
-          )}
-        </ScrollView>
+  const searchCity = async () => {
+    const q = cityQuery.trim();
+    Keyboard.dismiss();
+    if (!q || !mapRef.current) return;
+    try {
+      const res = await Location.geocodeAsync(q);
+      if (res?.[0]) {
+        mapRef.current.animateToRegion(
+          { latitude: res[0].latitude, longitude: res[0].longitude, latitudeDelta: 0.12, longitudeDelta: 0.12 },
+          600
+        );
+      }
+    } catch (e) {
+      console.log('City search failed', e);
+    }
+  };
 
-        <TouchableOpacity
-          style={[styles.createButton, { bottom: insets.bottom + 20 }]}
-          onPress={() => router.push('/create-event')}
-        >
-          <Ionicons name="add" size={28} color="#FFF" />
-        </TouchableOpacity>
-      </View>
+  const focusEvent = (event: Event, scrollList = true) => {
+    setSelectedId(event.event_id);
+    mapRef.current?.animateToRegion(
+      { latitude: event.latitude, longitude: event.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 },
+      450
     );
+    if (scrollList) {
+      const index = events.findIndex((e) => e.event_id === event.event_id);
+      if (index >= 0) listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+    }
+  };
+
+  const bottom = tabBarSpace(insets.bottom);
+
+  const listFallback = (title: string, subtitle: string) => (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.listHeader}>
+        <Text style={styles.listTitle}>{title}</Text>
+        <Text style={styles.listSubtitle}>{subtitle}</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: bottom }}>
+        {isLoading ? (
+          <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 40 }} />
+        ) : nearbyEvents.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="location-outline" size={44} color={colors.faint} />
+            <Text style={styles.emptyText}>Aucune School à proximité</Text>
+          </View>
+        ) : (
+          nearbyEvents.map((event) => (
+            <EventRow key={event.event_id} event={event} onPress={() => router.push(`/event/${event.event_id}`)} />
+          ))
+        )}
+      </ScrollView>
+    </View>
+  );
+
+  if (Platform.OS === 'web') {
+    return listFallback('Autour de toi', 'La carte est disponible sur l’app mobile. Voici les Schools à proximité :');
   }
 
-  // Native map view - with fallback for map loading errors
-  if (!location || mapsLoadError || !MapView) {
-    // Show list view as fallback if map can't load
-    if (mapsLoadError || !MapView) {
-      return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-          <View style={styles.webHeader}>
-            <Text style={styles.webHeaderTitle}>Événements à proximité</Text>
-            <Text style={styles.webHeaderSubtitle}>
-              Liste des événements disponibles :
-            </Text>
-          </View>
+  if (mapsLoadError || !MapView) {
+    return listFallback('Autour de toi', 'Les Schools à proximité :');
+  }
 
-          <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
-            {isLoading ? (
-              <ActivityIndicator size="large" color="#D946EF" style={{ marginTop: 40 }} />
-            ) : nearbyEvents.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="location-outline" size={48} color="#444" />
-                <Text style={styles.emptyText}>Aucun événement à proximité</Text>
-              </View>
-            ) : (
-              nearbyEvents.map((event) => (
-                <TouchableOpacity
-                  key={event.event_id}
-                  style={styles.webEventCard}
-                  onPress={() => router.push(`/event/${event.event_id}`)}
-                >
-                  <View style={styles.webEventIcon}>
-                    <Ionicons name="calendar" size={24} color="#D946EF" />
-                  </View>
-                  <View style={styles.webEventInfo}>
-                    <Text style={styles.webEventName}>{event.name}</Text>
-                    <View style={styles.webEventLocation}>
-                      <Ionicons name="location" size={14} color="#888" />
-                      <Text style={styles.webEventLocationText}>{event.location_name}</Text>
-                    </View>
-                    <View style={styles.webEventMeta}>
-                      <View style={styles.webEventParticipants}>
-                        <Ionicons name="people" size={14} color="#D946EF" />
-                        <Text style={styles.webEventParticipantsText}>
-                          {event.current_participants}/{event.max_participants}
-                        </Text>
-                      </View>
-                      {event.distance_km !== undefined && (
-                        <Text style={styles.webEventDistance}>{event.distance_km} km</Text>
-                      )}
-                    </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color="#666" />
-                </TouchableOpacity>
-              ))
-            )}
-          </ScrollView>
-
-          <TouchableOpacity
-            style={[styles.createButton, { bottom: insets.bottom + 20 }]}
-            onPress={() => router.push('/create-event')}
-          >
-            <Ionicons name="add" size={28} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-      );
-    }
-    
+  if (!location) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#D946EF" />
-        <Text style={styles.loadingText}>Chargement de la carte...</Text>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={styles.loadingText}>Chargement de la carte…</Text>
       </View>
     );
   }
@@ -255,336 +286,301 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
-        }}
+        ref={mapRef}
+        style={StyleSheet.absoluteFill}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        customMapStyle={MAP_STYLE}
+        userInterfaceStyle="dark"
+        initialRegion={{ ...location, latitudeDelta: 0.1, longitudeDelta: 0.1 }}
         showsUserLocation
         showsMyLocationButton={false}
+        showsCompass={false}
+        showsPointsOfInterest={false}
+        toolbarEnabled={false}
+        onPress={() => setSelectedId(null)}
       >
-        {nearbyEvents.map((event) => (
+        {events.map((event) => (
           <Marker
             key={event.event_id}
-            coordinate={{
-              latitude: event.latitude,
-              longitude: event.longitude,
+            coordinate={{ latitude: event.latitude, longitude: event.longitude }}
+            anchor={{ x: 0.5, y: 1 }}
+            tracksViewChanges={trackPins}
+            onPress={(e: any) => {
+              e?.stopPropagation?.();
+              focusEvent(event);
             }}
-            onPress={() => setSelectedEvent(event)}
+            zIndex={selectedId === event.event_id ? 10 : 1}
           >
-            <View style={[
-              styles.marker, 
-              { backgroundColor: getThemeColor(event.theme) },
-              selectedEvent?.event_id === event.event_id && styles.markerSelected
-            ]}>
-              <Ionicons name="calendar" size={16} color="#FFF" />
-            </View>
+            <EventPin event={event} selected={selectedId === event.event_id} />
           </Marker>
         ))}
       </MapView>
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Carte des événements</Text>
-          <Text style={styles.headerSubtitle}>{nearbyEvents.length} événements à proximité</Text>
+      <View style={[styles.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+        <View style={styles.searchRow}>
+          <View style={styles.searchBox}>
+            <Ionicons name="search" size={18} color={colors.muted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher une ville"
+              value={cityQuery}
+              onChangeText={setCityQuery}
+              onSubmitEditing={searchCity}
+              returnKeyType="search"
+            />
+          </View>
+          <Pressable style={styles.squareButton} onPress={refreshEvents} disabled={isRefreshing} accessibilityLabel="Actualiser les Schools">
+            {isRefreshing ? <ActivityIndicator size="small" color={colors.accent} /> : <Ionicons name="refresh" size={20} color={colors.text} />}
+          </Pressable>
         </View>
-        <TouchableOpacity 
-          style={styles.refreshButton} 
-          onPress={refreshEvents}
-          disabled={isRefreshing}
-        >
-          {isRefreshing ? (
-            <ActivityIndicator size="small" color="#D946EF" />
-          ) : (
-            <Ionicons name="refresh" size={22} color="#D946EF" />
-          )}
-        </TouchableOpacity>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={{ flexGrow: 0 }}>
+          <Chip label={`Tout · ${nearbyEvents.length}`} active={timeFilter === 'all'} onPress={() => setTimeFilter('all')} />
+          <Chip label={`En ce moment · ${liveCount}`} active={timeFilter === 'now'} onPress={() => setTimeFilter('now')} />
+          <Chip label="À venir" active={timeFilter === 'later'} onPress={() => setTimeFilter('later')} />
+        </ScrollView>
       </View>
 
-      <TouchableOpacity
-        style={[styles.createButton, { bottom: insets.bottom + 100 }]}
-        onPress={() => router.push('/create-event')}
+      <Pressable
+        style={[styles.locateButton, { bottom: bottom + (events.length ? 128 : 16) }]}
+        onPress={recenter}
+        accessibilityLabel="Recentrer sur ma position"
       >
-        <Ionicons name="add" size={28} color="#FFF" />
-      </TouchableOpacity>
+        <Ionicons name="navigate" size={20} color={colors.info} />
+      </Pressable>
 
-      {selectedEvent && (
-        <TouchableOpacity
-          style={[styles.eventCard, { bottom: insets.bottom + 100 }]}
-          onPress={() => router.push(`/event/${selectedEvent.event_id}`)}
-          activeOpacity={0.95}
-        >
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setSelectedEvent(null)}
-          >
-            <Ionicons name="close" size={20} color="#888" />
-          </TouchableOpacity>
-          <View style={styles.eventCardContent}>
-            <Text style={styles.eventName}>{selectedEvent.name}</Text>
-            <View style={styles.eventInfo}>
-              <Ionicons name="location" size={14} color="#888" />
-              <Text style={styles.eventLocation}>{selectedEvent.location_name}</Text>
-            </View>
-            <View style={styles.eventInfo}>
-              <Ionicons name="people" size={14} color="#D946EF" />
-              <Text style={styles.participantsText}>
-                {selectedEvent.current_participants}/{selectedEvent.max_participants} participants
-              </Text>
-            </View>
-            {selectedEvent.theme && (
-              <View style={styles.themeBadge}>
-                <Text style={styles.themeBadgeText}>{selectedEvent.theme}</Text>
-              </View>
-            )}
+      {events.length > 0 ? (
+        <FlatList
+          ref={listRef}
+          data={events}
+          horizontal
+          keyExtractor={(e) => e.event_id}
+          showsHorizontalScrollIndicator={false}
+          style={[styles.carousel, { bottom: bottom - 6 }]}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP }}
+          snapToInterval={CARD_WIDTH + CARD_GAP}
+          decelerationRate="fast"
+          getItemLayout={(_, index) => ({ length: CARD_WIDTH + CARD_GAP, offset: (CARD_WIDTH + CARD_GAP) * index, index })}
+          onMomentumScrollEnd={(e) => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / (CARD_WIDTH + CARD_GAP));
+            const ev = events[index];
+            if (ev && ev.event_id !== selectedId) focusEvent(ev, false);
+          }}
+          renderItem={({ item }) => (
+            <MapCard event={item} onPress={() => router.push(`/event/${item.event_id}`)} />
+          )}
+        />
+      ) : (
+        !isLoading && (
+          <View style={[styles.emptyBanner, { bottom: bottom }]}>
+            <Text style={styles.emptyBannerText}>Aucune School ici pour l'instant.</Text>
+            <Pressable onPress={() => router.push('/create-event')} hitSlop={8}>
+              <Text style={styles.emptyBannerLink}>En créer une</Text>
+            </Pressable>
           </View>
-          <View style={styles.eventCardArrow}>
-            <Ionicons name="chevron-forward" size={24} color="#D946EF" />
-          </View>
-        </TouchableOpacity>
+        )
       )}
     </View>
   );
 }
 
+const shadow = {
+  shadowColor: '#000',
+  shadowOpacity: 0.45,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 10 },
+  elevation: 10,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: colors.mapBg,
   },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color: '#888',
+    color: colors.muted,
     marginTop: 12,
-    fontSize: 16,
+    fontSize: 15,
   },
-  map: {
-    width: width,
-    height: height,
-  },
-  header: {
+  top: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    gap: 10,
+  },
+  searchRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 12,
+    gap: 10,
+    paddingHorizontal: 16,
   },
-  headerContent: {
+  searchBox: {
     flex: 1,
-    backgroundColor: 'rgba(10, 10, 10, 0.9)',
-    borderRadius: 12,
-    padding: 16,
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(12,10,18,0.94)',
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    ...shadow,
   },
-  refreshButton: {
-    backgroundColor: 'rgba(10, 10, 10, 0.9)',
-    borderRadius: 12,
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+  },
+  squareButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: 'rgba(12,10,18,0.94)',
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow,
+  },
+  filters: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  locateButton: {
+    position: 'absolute',
+    right: 16,
     width: 48,
     height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 4,
-  },
-  marker: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#D946EF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#FFF',
-  },
-  markerSelected: {
-    backgroundColor: '#C026D3',
-    transform: [{ scale: 1.2 }],
-  },
-  createButton: {
-    position: 'absolute',
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#D946EF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  eventCard: {
-    position: 'absolute',
-    left: 20,
-    right: 90,
-    backgroundColor: '#1A1A1A',
     borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
+    backgroundColor: 'rgba(12,10,18,0.94)',
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow,
+  },
+  pinWrap: {
     alignItems: 'center',
   },
-  closeButton: {
+  pinCount: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#2A2A2A',
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 5,
+    borderRadius: 11,
+    backgroundColor: colors.bg,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
   },
-  eventCardContent: {
-    flex: 1,
-    paddingRight: 12,
+  pinCountText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: '800',
   },
-  eventName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
-    marginBottom: 8,
+  pinTail: {
+    width: 10,
+    height: 10,
+    transform: [{ rotate: '45deg' }],
+    marginTop: -17,
   },
-  eventInfo: {
+  carousel: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexGrow: 0,
+  },
+  card: {
+    width: CARD_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
+    gap: 12,
+    padding: 12,
+    borderRadius: 24,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    ...shadow,
   },
-  eventLocation: {
-    color: '#888',
-    fontSize: 13,
-  },
-  participantsText: {
-    color: '#D946EF',
-    fontSize: 13,
-  },
-  themeBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 107, 53, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  themeBadgeText: {
-    color: '#D946EF',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  eventCardArrow: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+  cardThumb: {
+    width: 76,
+    height: 76,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Web-specific styles
-  webHeader: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+  cardStatus: {
+    fontSize: 12,
+    fontWeight: '700',
   },
-  webHeaderTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 8,
-  },
-  webHeaderSubtitle: {
-    fontSize: 14,
-    color: '#888',
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
     lineHeight: 20,
   },
-  webList: {
-    flex: 1,
+  cardMeta: {
+    fontSize: 13,
+    color: colors.muted,
   },
-  webListContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  webEventCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  webEventIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+  cardGo: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
   },
-  webEventInfo: {
+  emptyBanner: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    ...shadow,
+  },
+  emptyBannerText: {
+    color: colors.textSecondary,
+    fontSize: 14,
     flex: 1,
   },
-  webEventName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
-    marginBottom: 4,
+  emptyBannerLink: {
+    color: '#E9A6F5',
+    fontSize: 14,
+    fontWeight: '700',
   },
-  webEventLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 6,
+  listHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 6,
   },
-  webEventLocationText: {
-    color: '#888',
-    fontSize: 13,
+  listTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.text,
   },
-  webEventMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  webEventParticipants: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  webEventParticipantsText: {
-    color: '#D946EF',
-    fontSize: 13,
-  },
-  webEventDistance: {
-    color: '#4CAF50',
-    fontSize: 13,
-    fontWeight: '500',
+  listSubtitle: {
+    fontSize: 14,
+    color: colors.muted,
+    lineHeight: 20,
   },
   emptyContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: 60,
+    gap: 12,
   },
   emptyText: {
-    color: '#888',
-    fontSize: 16,
-    marginTop: 12,
+    color: colors.muted,
+    fontSize: 15,
   },
 });

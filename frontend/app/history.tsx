@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -9,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { Text } from '../components/ui/Text';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -104,7 +104,7 @@ export default function HistoryScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#F5F3FA" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mes Schools passées</Text>
         <View style={styles.placeholder} />
@@ -123,7 +123,7 @@ export default function HistoryScreen() {
       >
         {events.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="time-outline" size={64} color="#444" />
+            <Ionicons name="time-outline" size={64} color="#3A3448" />
             <Text style={styles.emptyText}>Aucune School passée</Text>
             <Text style={styles.emptySubtext}>
               Rejoignez des Schools pour les voir apparaître ici
@@ -197,7 +197,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#0C0A12',
   },
   centered: {
     alignItems: 'center',
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: '#16131F',
   },
   backButton: {
     width: 44,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
   },
   placeholder: {
     width: 44,
@@ -238,19 +238,19 @@ const styles = StyleSheet.create({
     paddingTop: 80,
   },
   emptyText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 18,
     fontWeight: '600',
     marginTop: 16,
   },
   emptySubtext: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
   },
   eventCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#16131F',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -266,12 +266,12 @@ const styles = StyleSheet.create({
   eventName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: '#F5F3FA',
     marginBottom: 4,
   },
   eventDate: {
     fontSize: 14,
-    color: '#888',
+    color: '#A39DB3',
     marginBottom: 8,
   },
   themeTag: {
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   participantsLabel: {
-    color: '#888',
+    color: '#A39DB3',
     fontSize: 13,
     marginTop: 16,
     marginBottom: 12,
@@ -321,17 +321,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   placeholderPhoto: {
-    backgroundColor: '#333',
+    backgroundColor: '#2A2535',
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholderText: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 18,
     fontWeight: '600',
   },
   participantName: {
-    color: '#FFF',
+    color: '#F5F3FA',
     fontSize: 12,
     textAlign: 'center',
   },
