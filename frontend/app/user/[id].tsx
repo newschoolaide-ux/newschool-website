@@ -69,14 +69,6 @@ export default function UserProfileScreen() {
     }
   };
 
-  const getTierLabel = (tier: string) => {
-    switch (tier) {
-      case 'ambassador': return 'Ambassadeur';
-      case 'standard': return 'Standard';
-      default: return 'Gratuit';
-    }
-  };
-
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -123,7 +115,6 @@ export default function UserProfileScreen() {
             )}
           </View>
           <Text style={styles.name}>{profile.first_name}</Text>
-          <Text style={styles.tier}>{getTierLabel(profile.subscription_tier)}</Text>
         </View>
 
         <View style={styles.infoSection}>

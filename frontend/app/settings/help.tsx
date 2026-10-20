@@ -24,8 +24,8 @@ const FAQ_ITEMS = [
     answer: "Parcourez la carte ou la liste des événements, appuyez sur une school qui vous intéresse, puis cliquez sur 'Rejoindre'. Vous aurez accès au chat de groupe et aux informations de l'événement."
   },
   {
-    question: "Quelles sont les limites de mon abonnement ?",
-    answer: "• Gratuit : 1 création + 3 participations par mois\n• Standard (7,99€) : 4 créations/participations par mois\n• Ambassadeur (10,99€) : Illimité"
+    question: "New School est-elle payante ?",
+    answer: "Non, New School est 100 % gratuite. Vous pouvez créer et rejoindre autant de schools que vous le souhaitez, sans abonnement ni limite."
   },
   {
     question: "Comment modifier ou supprimer ma school ?",

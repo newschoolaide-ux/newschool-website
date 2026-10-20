@@ -15,12 +15,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEventStore } from '../../stores/eventStore';
 
-const SUBSCRIPTION_TIERS = {
-  free: { name: 'Gratuit', color: '#666' },
-  standard: { name: 'Standard', color: '#D946EF' },
-  ambassador: { name: 'Ambassadeur', color: '#FFD700' },
-};
-
 export default function ProfileScreen() {
   const { user, token, logout, refreshUser } = useAuth();
   const { userCreatedEvents, userJoinedEvents, fetchUserCreatedEvents, fetchUserJoinedEvents } = useEventStore();
@@ -63,8 +57,6 @@ export default function ProfileScreen() {
     );
   };
 
-  const tierInfo = SUBSCRIPTION_TIERS[user?.subscription_tier as keyof typeof SUBSCRIPTION_TIERS] || SUBSCRIPTION_TIERS.free;
-
   return (
     <ScrollView
       style={[styles.container, { paddingTop: insets.top }]}
@@ -94,9 +86,6 @@ export default function ProfileScreen() {
                 <Text style={styles.avatarText}>{user?.first_name?.[0] || 'U'}</Text>
               </View>
             )}
-            <View style={[styles.tierBadge, { backgroundColor: tierInfo.color }]}>
-              <Text style={styles.tierBadgeText}>{tierInfo.name}</Text>
-            </View>
           </View>
           <Text style={styles.userName}>{user?.first_name || 'Utilisateur'}</Text>
           <Text style={styles.userEmail}>{user?.email}</Text>
@@ -123,29 +112,6 @@ export default function ProfileScreen() {
           <Text style={styles.statNumber}>{userJoinedEvents.length}</Text>
           <Text style={styles.statLabel}>Événements rejoints</Text>
         </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Abonnement</Text>
-        <TouchableOpacity
-          style={styles.subscriptionCard}
-          onPress={() => router.push('/subscription')}
-        >
-          <View style={styles.subscriptionInfo}>
-            <View style={[styles.subscriptionIcon, { backgroundColor: tierInfo.color }]}>
-              <Ionicons name="star" size={20} color="#FFF" />
-            </View>
-            <View>
-              <Text style={styles.subscriptionName}>{tierInfo.name}</Text>
-              <Text style={styles.subscriptionDesc}>
-                {user?.subscription_tier === 'free'
-                  ? 'Passez à un abonnement premium'
-                  : 'Gérez votre abonnement'}
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>

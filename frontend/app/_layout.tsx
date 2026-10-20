@@ -112,7 +112,6 @@ function RootLayoutContent() {
         <Stack.Screen name="chat/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="user/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="create-event" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="subscription" options={{ presentation: 'modal' }} />
         <Stack.Screen name="profile/edit" options={{ presentation: 'modal' }} />
         <Stack.Screen name="settings/notifications" options={{ presentation: 'card' }} />
         <Stack.Screen name="settings/privacy" options={{ presentation: 'card' }} />
